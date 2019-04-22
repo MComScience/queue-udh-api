@@ -110,6 +110,21 @@ $config = [
                         'OPTIONS delete-user' => 'options',
                     ]
                 ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'v1/queue',
+                    'pluralize' => false,
+                    'tokens' => [
+                        '{id}' => '<id:\d+>',
+                    ],
+                    'extraPatterns' => [
+                        'OPTIONS {id}' => 'options',
+                        'POST register' => 'register',
+                        'OPTIONS register' => 'options',
+                        'GET data-print' => 'data-print',
+                        'OPTIONS data-print' => 'options',
+                    ]
+                ],
             ],
         ],
         'response' => [
