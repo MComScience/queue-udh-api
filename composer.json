@@ -23,7 +23,8 @@
         "dektrium/yii2-user": "^0.9.14",
         "vlucas/phpdotenv": "^3.3",
         "intervention/image": "^2.4",
-        "kartik-v/yii2-icons": "@dev"
+        "kartik-v/yii2-icons": "@dev",
+        "mongosoft/yii2-soap-client": "*"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

@@ -108,6 +108,8 @@ $config = [
                         'OPTIONS update-user' => 'options',
                         'DELETE delete-user' => 'delete-user',
                         'OPTIONS delete-user' => 'options',
+                        'GET pt-right' => 'pt-right',
+                        'OPTIONS pt-right' => 'options',
                     ]
                 ],
                 [
@@ -123,6 +125,8 @@ $config = [
                         'OPTIONS register' => 'options',
                         'GET data-print' => 'data-print',
                         'OPTIONS data-print' => 'options',
+                        'GET kiosk-list' => 'kiosk-list',
+                        'OPTIONS kiosk-list' => 'options',
                     ]
                 ],
             ],
@@ -170,6 +174,20 @@ $config = [
             'defaultTimeZone' => 'Asia/Bangkok',
             'timeZone' => 'Asia/Bangkok'
         ],
+        'nhso' => [
+            'class' => 'mongosoft\soapclient\Client',
+            'url' => 'http://ucws.nhso.go.th/ucwstokenp1/UCWSTokenP1?WSDL',
+            'options' => [
+                'cache_wsdl' => WSDL_CACHE_NONE
+            ],
+        ],
+        'db2' => [
+            'class' => 'yii\db\Connection',
+            'dsn' => 'mysql:host=db;dbname=api_udh;port=3306',
+            'username' => 'root',
+            'password' => 'root_db',
+            'charset' => 'utf8',
+        ]
     ],
     'modules' => [
         'v1' => [

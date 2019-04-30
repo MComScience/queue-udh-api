@@ -66,6 +66,7 @@ class UserController extends ActiveController
                 'account' => ['post'],
                 'update-user' => ['get', 'post'],
                 'delete-user' => ['delete'],
+                'pt-right' => ['get'],
             ],
         ];
         // remove authentication filter
@@ -84,7 +85,7 @@ class UserController extends ActiveController
         // re-add authentication filter
         $behaviors['authenticator'] = $auth;
         // avoid authentication on CORS-pre-flight requests (HTTP OPTIONS method)
-        $behaviors['authenticator']['except'] = ['options','upload-avatar'];
+        $behaviors['authenticator']['except'] = ['options','upload-avatar', 'pt-right'];
         // setup access
         $behaviors['access'] = [
 	        'class' => AccessControl::className(),
@@ -224,5 +225,27 @@ class UserController extends ActiveController
                 'message' => \Yii::t('user', 'User has been deleted')
             ];
         }
+    }
+
+    public function actionPtRight($cid)
+    {
+        $client = Yii::$app->nhso;
+        $sql = "SELECT * FROM nhso_token ORDER BY updated_at DESC";
+        $userToken = \Yii::$app->db2->createCommand($sql)->queryOne();
+        $params = array(
+            'user_person_id' => $userToken ? $userToken['token_cid'] : '',
+            'smctoken' => $userToken ? $userToken['token_key'] : '',
+            'person_id' => $cid
+        );
+        $res = $client->searchCurrentByPID($params);
+        $data = $res['return'];
+        if (!$data) {
+            $data = ['status-system' => 'error', 'message' => 'RESPONSE FAILED'];
+        } else if ($data['ws_status'] == 'NHSO-00003') {
+            $data = ['status-system' => 'error', 'message' => (isset($data['ws_status_desc']) ? $data['ws_status_desc'] : 'TOKEN EXPIRE')];
+        } else if (empty($data['fname'])) {
+            $data = ['status-system' => 'error', 'message' => 'NOT FOUND IN NHSO'];
+        }
+        return $data;
     }
 }
