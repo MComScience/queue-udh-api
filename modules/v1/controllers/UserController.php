@@ -239,7 +239,7 @@ class UserController extends ActiveController
         );
         $res = $client->searchCurrentByPID($params);
         $res = (array) $res;
-        $data = $res['return'];
+        $data = (array) $res['return'];
         if (!$data) {
             $data = ['status-system' => 'error', 'message' => 'RESPONSE FAILED'];
         } else if ($data['ws_status'] == 'NHSO-00003') {
