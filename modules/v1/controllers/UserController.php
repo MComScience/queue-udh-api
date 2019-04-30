@@ -238,6 +238,7 @@ class UserController extends ActiveController
             'person_id' => $cid
         );
         $res = $client->searchCurrentByPID($params);
+        $res = (array) $res;
         $data = $res['return'];
         if (!$data) {
             $data = ['status-system' => 'error', 'message' => 'RESPONSE FAILED'];
