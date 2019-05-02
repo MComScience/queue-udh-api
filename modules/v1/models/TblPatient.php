@@ -60,12 +60,12 @@ class TblPatient extends \yii\db\ActiveRecord
     {
         return [
             [['hn', 'cid', 'firstname', 'lastname'], 'required'],
-            [['age'], 'integer'],
-            [['cid'], 'string', 'max' => 13],
             [['birth_date'], 'safe'],
+            [['age'], 'integer'],
             [['appoint'], 'string'],
             [['hn', 'title', 'nation'], 'string', 'max' => 50],
-            [['firstname', 'lastname', 'fullname', 'address'], 'string', 'max' => 255],
+            [['cid'], 'string', 'max' => 13],
+            [['firstname', 'lastname', 'fullname', 'address', 'maininscl_name', 'subinscl_name'], 'string', 'max' => 255],
             [['blood_group'], 'string', 'max' => 10],
             [['occ'], 'string', 'max' => 100],
         ];
@@ -91,6 +91,8 @@ class TblPatient extends \yii\db\ActiveRecord
             'address' => 'ที่อยู่',
             'occ' => 'อาชีพ',
             'appoint' => 'นัดหมาย',
+            'maininscl_name' => 'สิทธิ',
+            'subinscl_name' => 'สิทธิ',
         ];
     }
 
