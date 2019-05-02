@@ -1,4 +1,5 @@
 <?php
+
 namespace app\modules\v1\controllers;
 
 use Yii;
@@ -31,15 +32,15 @@ class UserController extends ActiveController
     }
 
     public function actions()
-	{
-	    $actions = parent::actions();
+    {
+        $actions = parent::actions();
 
-	    // disable the "delete" and "create" actions
+        // disable the "delete" and "create" actions
         //unset($actions['delete'], $actions['create'], $actions['update']);
-        
+
         //$actions['index']['users'] = [$this, 'users'];
 
-	    return $actions;
+        return $actions;
     }
 
     public function behaviors()
@@ -56,12 +57,12 @@ class UserController extends ActiveController
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'index'  => ['get'],
-                'view'   => ['get'],
+                'index' => ['get'],
+                'view' => ['get'],
                 'create' => ['post'],
                 'update' => ['get', 'post'],
                 'delete' => ['delete'],
-                'profile' => ['get','post'],
+                'profile' => ['get', 'post'],
                 'upload-avatar' => ['post'],
                 'account' => ['post'],
                 'update-user' => ['get', 'post'],
@@ -85,18 +86,18 @@ class UserController extends ActiveController
         // re-add authentication filter
         $behaviors['authenticator'] = $auth;
         // avoid authentication on CORS-pre-flight requests (HTTP OPTIONS method)
-        $behaviors['authenticator']['except'] = ['options','upload-avatar', 'pt-right'];
+        $behaviors['authenticator']['except'] = ['options', 'upload-avatar', 'pt-right'];
         // setup access
         $behaviors['access'] = [
-	        'class' => AccessControl::className(),
-	        'only' => ['index', 'view', 'create', 'update', 'delete'], //only be applied to
-	        'rules' => [
-		        [
-			        'allow' => true,
-			        'actions' => ['index', 'view', 'create', 'update', 'delete', 'profile', 'account', 'delete-user'],
-			        'roles' => ['@'],
-		        ],
-	        ],
+            'class' => AccessControl::className(),
+            'only' => ['index', 'view', 'create', 'update', 'delete'], //only be applied to
+            'rules' => [
+                [
+                    'allow' => true,
+                    'actions' => ['index', 'view', 'create', 'update', 'delete', 'profile', 'account', 'delete-user'],
+                    'roles' => ['@'],
+                ],
+            ],
         ];
         return $behaviors;
     }
@@ -106,7 +107,7 @@ class UserController extends ActiveController
         $request = Yii::$app->request;
         $model = Profile::find()->where(['user_id' => \Yii::$app->user->identity->getId()])->one();
         $account = \Yii::createObject(SettingsForm::className());
-        if($request->isGet){
+        if ($request->isGet) {
             return [
                 'profile' => $model,
                 'account' => $account,
@@ -120,9 +121,9 @@ class UserController extends ActiveController
             }
             $model->load(\Yii::$app->getRequest()->getBodyParams(), '');
             $avatar = $request->post('avatar');
-            if($avatar){
+            if ($avatar) {
                 $decode = Json::decode($avatar);
-                $decode[0]['url'] = Url::base(true).'/uploads/avatar/'.$decode[0]['name'];
+                $decode[0]['url'] = Url::base(true) . '/uploads/avatar/' . $decode[0]['name'];
                 $avatar = Json::encode($decode);
             }
             $model->user->avatar = $avatar;
@@ -133,7 +134,7 @@ class UserController extends ActiveController
                 ];
             } else {
                 // Validation error
-                throw new HttpException(400, Json::encode($model->errors));
+                throw new HttpException(422, Json::encode($model->errors));
             }
         }
     }
@@ -150,7 +151,7 @@ class UserController extends ActiveController
             ];
         } else {
             // Validation error
-            throw new HttpException(400, Json::encode($model->errors));
+            throw new HttpException(422, Json::encode($model->errors));
         }
     }
 
@@ -166,14 +167,14 @@ class UserController extends ActiveController
             $profile->link('user', $user);
         }
 
-        if($request->isGet){
+        if ($request->isGet) {
             return [
                 'user' => $user,
                 'profile' => $profile
             ];
         } else {
             $user->load(\Yii::$app->getRequest()->getBodyParams(), '');
-            if(!empty($request->post('role'))){
+            if ($request->post('role')) {
                 $user->role = ($request->post('role') == 'Admin') ? 20 : 10;
             }
             $profile->load(\Yii::$app->getRequest()->getBodyParams(), '');
@@ -185,7 +186,7 @@ class UserController extends ActiveController
                 ];
             } else {
                 // Validation error
-                throw new HttpException(400, ArrayHelper::merge(ActiveForm::validate($profile), ActiveForm::validate($user)));
+                throw new HttpException(422, ArrayHelper::merge(ActiveForm::validate($profile), ActiveForm::validate($user)));
             }
         }
     }
@@ -195,10 +196,10 @@ class UserController extends ActiveController
         $request = Yii::$app->request;
         $files = UploadedFile::getInstanceByName('avatar');
         $path = 'uploads/avatar/' . $files->baseName . '.' . $files->extension;
-        if($files->saveAs('uploads/avatar/' . $files->baseName . '.' . $files->extension)){
+        if ($files->saveAs('uploads/avatar/' . $files->baseName . '.' . $files->extension)) {
             $manager = ImageManagerStatic::make($path)->fit(215, 215);
             FileHelper::unlink($path);
-            if($manager->save($path)){
+            if ($manager->save($path)) {
                 return $files;
             }
         }
@@ -206,7 +207,7 @@ class UserController extends ActiveController
 
     protected function findModel($id)
     {
-        
+
         $user = User::findOne($id);
         if ($user === null) {
             throw new NotFoundHttpException('The requested page does not exist');
@@ -217,7 +218,7 @@ class UserController extends ActiveController
     public function actionDeleteUser($id)
     {
         if ($id == \Yii::$app->user->getId()) {
-            throw new HttpException(400, \Yii::t('user', 'You can not remove your own account'));
+            throw new HttpException(422, \Yii::t('user', 'You can not remove your own account'));
         } else {
             $model = $this->findModel($id);
             $model->delete();
@@ -238,8 +239,8 @@ class UserController extends ActiveController
             'person_id' => $cid
         );
         $res = $client->searchCurrentByPID($params);
-        $res = (array) $res;
-        $data = (array) $res['return'];
+        $res = (array)$res;
+        $data = (array)$res['return'];
         if (!$data) {
             $data = ['status-system' => 'error', 'message' => 'RESPONSE FAILED'];
         } else if ($data['ws_status'] == 'NHSO-00003') {

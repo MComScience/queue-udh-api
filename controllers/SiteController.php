@@ -151,4 +151,32 @@ class SiteController extends Controller
 
         return $response;
     }
+
+    public function actionClearCache()
+    {
+        $assetPath = \Yii::getAlias('@app') . '/web/assets/';
+
+        $this->recursiveDelete($assetPath);
+
+        if (\Yii::$app->cache->flush()) {
+            \Yii::$app->session->setFlash('success', 'Cache has been flushed.');
+            return 'Cache has been flushed.';
+        } else {
+            \Yii::$app->session->setFlash('error', 'Failed to flush cache.');
+            return 'Failed to flush cache.';
+        }
+    }
+
+    public static function recursiveDelete($path)
+    {
+        if (is_file($path)) {
+            return @unlink($path);
+        } elseif (is_dir($path)) {
+            $scan = glob(rtrim($path, '/') . '/*');
+            foreach ($scan as $index => $newPath) {
+                self::recursiveDelete($newPath);
+            }
+            return @rmdir($path);
+        }
+    }
 }

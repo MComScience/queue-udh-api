@@ -1,6 +1,7 @@
 <?php
 
 /* @var $this \yii\web\View */
+
 /* @var $content string */
 
 use app\widgets\Alert;
@@ -38,11 +39,22 @@ AppAsset::register($this);
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
         'items' => [
-            ['label' => 'Home', 'url' => ['/site/index']],
-            ['label' => 'About', 'url' => ['/site/about']],
-            ['label' => 'Contact', 'url' => ['/site/contact']],
+            ['label' => 'หน้าหลัก', 'url' => ['/site/index']],
+            ['label' => 'ผู้ใช้งาน', 'url' => ['/user/admin/index'],'visible' => !Yii::$app->user->isGuest],
+            [
+                'label' => 'ตั้งค่า',
+                'items' => [
+                    ['label' => 'กลุ่มแผนก', 'url' => '/settings/dept-group/index'],
+                    // '<li class="divider"></li>',
+                    // '<li class="dropdown-header">Dropdown Header</li>',
+                    ['label' => 'แผนก', 'url' => '/settings/dept/index'],
+                    ['label' => 'ตู้กดบัตรคิว', 'url' => '/settings/kiosk/index'],
+                ],
+                'visible' => !Yii::$app->user->isGuest
+            ],
+            //['label' => 'Contact', 'url' => ['/site/contact']],
             Yii::$app->user->isGuest ? (
-                ['label' => 'Login', 'url' => ['/auth/login']]
+            ['label' => 'Login', 'url' => ['/auth/login']]
             ) : (
                 '<li>'
                 . Html::beginForm(['/auth/logout'], 'post')

@@ -3,23 +3,25 @@
 namespace app\modules\v1\models;
 
 use Yii;
-use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
-use yii\db\ActiveRecord;
+use yii\behaviors\BlameableBehavior;
 use yii\db\Expression;
-use app\modules\v1\behaviors\CoreMultiValueBehavior;
 use yii\helpers\ArrayHelper;
-use yii\helpers\Json;
-
+use yii\db\ActiveRecord;
+use app\modules\v1\traits\ModelTrait;
+use app\modules\v1\components\AutoNumber;
+use app\modules\v1\behaviors\CoreMultiValueBehavior;
 /**
  * This is the model class for table "tbl_queue".
  *
- * @property int $queue_id
- * @property string $queue_no หมายเลขคิว
- * @property string $queue_hn HN
- * @property string $fullname ชื่อ-นามสกุล
- * @property string $user_info ข้อมูลผู้ป่วย
- * @property string $department_code รหัสแผนก
+ * @property int $queue_id รหัสคิว
+ * @property string $queue_no เลขคิว
+ * @property int $patient_id ไอดีผู้ป่วย
+ * @property int $dept_group_id กลุ่มแผนก
+ * @property string $dept_id รหัสแผนก
+ * @property int $priority_id ความสำคัญ
+ * @property int $queue_type ประเภทคิว
+ * @property int $queue_status_id สถานะคิว
  * @property string $created_at วันที่บันทึก
  * @property string $updated_at วันที่แก้ไข
  * @property int $created_by ผู้บันทึก
@@ -27,6 +29,7 @@ use yii\helpers\Json;
  */
 class TblQueue extends \yii\db\ActiveRecord
 {
+    use ModelTrait;
     /**
      * {@inheritdoc}
      */
@@ -38,20 +41,16 @@ class TblQueue extends \yii\db\ActiveRecord
     public function behaviors()
     {
         return [
-            /* [
-                'class' => BlameableBehavior::className(),
-                'attributes' => [
-                    ActiveRecord::EVENT_BEFORE_INSERT => ['created_by','updated_by'],
-                    ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_by'],
-                ],
-            ], */
             [
                 'class' => TimestampBehavior::className(),
-                'attributes' => [
-                    ActiveRecord::EVENT_BEFORE_INSERT => ['created_at','updated_at'],
-                    ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_at'],
-                ],
+                'createdAtAttribute' => 'created_at',
+                'updatedAtAttribute' => 'updated_at',
                 'value' => new Expression('NOW()'),
+            ],
+            [
+                'class' => BlameableBehavior::className(),
+                'createdByAttribute' => 'created_by',
+                'updatedByAttribute' => 'updated_by',
             ],
             [
                 'class' => CoreMultiValueBehavior::className(),
@@ -60,7 +59,7 @@ class TblQueue extends \yii\db\ActiveRecord
                 ],
                 'value' => function ($event) {
                     if(empty($this->queue_no)){
-                        return $this->generateQnumber();
+                        return $this->generateNumber();
                     }else{
                         return $event->sender[$event->data];
                     }
@@ -75,12 +74,10 @@ class TblQueue extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['queue_hn', 'fullname', 'department_code'], 'required'],
-            [['user_info'], 'string'],
+            [['patient_id', 'dept_group_id', 'dept_id', 'priority_id', 'queue_type', 'queue_status_id'], 'required'],
+            [['patient_id', 'dept_group_id', 'priority_id', 'queue_type', 'queue_status_id', 'created_by', 'updated_by'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
-            [['created_by', 'updated_by'], 'integer'],
-            [['queue_no', 'queue_hn', 'department_code'], 'string', 'max' => 50],
-            [['fullname'], 'string', 'max' => 255],
+            [['queue_no', 'dept_id'], 'string', 'max' => 100],
         ];
     }
 
@@ -90,12 +87,14 @@ class TblQueue extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'queue_id' => 'Queue ID',
-            'queue_no' => 'หมายเลขคิว',
-            'queue_hn' => 'HN',
-            'fullname' => 'ชื่อ-นามสกุล',
-            'user_info' => 'ข้อมูลผู้ป่วย',
-            'department_code' => 'รหัสแผนก',
+            'queue_id' => 'รหัสคิว',
+            'queue_no' => 'เลขคิว',
+            'patient_id' => 'ไอดีผู้ป่วย',
+            'dept_group_id' => 'กลุ่มแผนก',
+            'dept_id' => 'รหัสแผนก',
+            'priority_id' => 'ความสำคัญ',
+            'queue_type' => 'ประเภทคิว',
+            'queue_status_id' => 'สถานะคิว',
             'created_at' => 'วันที่บันทึก',
             'updated_at' => 'วันที่แก้ไข',
             'created_by' => 'ผู้บันทึก',
@@ -103,8 +102,62 @@ class TblQueue extends \yii\db\ActiveRecord
         ];
     }
 
-    public function generateQnumber(){
-        $queue = ArrayHelper::map($this->find()->where(['department_code' => $this->department_code])->all(),'queue_id','queue_no');
+    // สถานะคิว
+    public function getStatus()
+    {
+        return $this->hasOne(TblQueueStatus::className(), ['queue_status_id' => 'queue_status_id']);
+    }
+
+    // ข้อมูลผู้ป่วย
+    public function getPatient()
+    {
+        return $this->hasOne(TblPatient::className(), ['patient_id' => 'patient_id']);
+    }
+
+    // กลุ่มแผนก
+    public function getDeptGroup()
+    {
+        return $this->hasOne(TblDeptGroup::className(), ['dept_group_id' => 'dept_group_id']);
+    }
+
+    // แผนก
+    public function getDept()
+    {
+        return $this->hasOne(TblDept::className(), ['dept_id' => 'dept_id']);
+    }
+
+    // ความสำคัญ
+    public function getPriority()
+    {
+        return $this->hasOne(TblPriority::className(), ['priority_id' => 'priority_id']);
+    }
+
+    // ประเภทคิว
+    public function getQueueTypeName($type)
+    {
+        $types = $this->getQueueTypes();
+        return ArrayHelper::getValue($types,$type, '');
+    }
+
+    // ประเภทคิว
+    public function getQueueTypes()
+    {
+        return [
+            1 => 'คิวซักประวัติ',
+            2 => 'คิวห้องตรวจ'
+        ];
+    }
+
+    private function generateNumber()
+    {
+        $department = $this->findModelDept($this->dept_id); // แผนก
+        $maxId = $this->find()->where(['dept_id' => $this->dept_id, 'dept_group_id' => $this->dept_group_id])->max('queue_id');
+        $no = 1;
+        if($maxId) {
+            $modelQueue = $this->findOne($maxId);
+            $no = $modelQueue['queue_no'];
+        }
+        /* $queue = ArrayHelper::map($this->find()->where([ 'dept_id' => $this->dept_id, 'dept_group_id' => $this->dept_group_id ])->all(),'queue_id','queue_no');
         $qnums = [];
         $maxqnum = null;
         $qid = null;
@@ -114,18 +167,13 @@ class TblQueue extends \yii\db\ActiveRecord
             }
             $maxqnum = max($qnums);
             $qid = array_search($maxqnum, $qnums);
-        }
+        }*/
         $component = \Yii::createObject([
-            'class'     => \app\modules\v1\components\AutoNumber::className(),
-            'prefix'    => 'A',
-            'number'    => ArrayHelper::getValue($queue,$qid,null),
-            'digit'     => 3,
+            'class'     => AutoNumber::className(),
+            'prefix'    => $department ? $department['dept_prefix'] : 'A',
+            'number'    => $no,
+            'digit'     => $department ? (int)$department['dept_num_digit'] : 3,
         ]);
         return $component->generate();
-    }
-
-    public function getDepartment()
-    {
-        return $this->hasOne(TblDepartment::className(), ['department_code' => 'department_code']);
     }
 }

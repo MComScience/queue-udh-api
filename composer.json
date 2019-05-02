@@ -24,7 +24,11 @@
         "vlucas/phpdotenv": "^3.3",
         "intervention/image": "^2.4",
         "kartik-v/yii2-icons": "@dev",
-        "mongosoft/yii2-soap-client": "*"
+        "mongosoft/yii2-soap-client": "*",
+        "mootensai/yii2-enhanced-gii": "dev-master",
+        "kartik-v/yii2-mpdf": "^1.0",
+        "johnitvn/yii2-ajaxcrud": "*",
+        "m-comscience/yii2-soap-client": "@dev"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

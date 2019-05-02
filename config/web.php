@@ -1,8 +1,11 @@
 <?php
+
 use \yii\web\Request;
+
 $baseUrl = str_replace('/web', '', (new Request)->getBaseUrl());
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
+$urlRules = require __DIR__ . '/rules.php';
 
 $config = [
     'id' => 'basic',
@@ -10,14 +13,15 @@ $config = [
     'bootstrap' => ['log'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset',
+        '@npm' => '@vendor/npm-asset',
     ],
-    'name' => 'API SERVICE UDON CITY',
+    'name' => 'QUEUE UDON HOSPITAL',
     # ตั้งค่าการใช้งานภาษาไทย (Language)
     'language' => 'th', // ตั้งค่าภาษาไทย
     # ตั้งค่า TimeZone ประเทศไทย
     'timeZone' => 'Asia/Bangkok', // ตั้งค่า TimeZone
     //'sourceLanguage' => 'th-TH',
+    'defaultRoute' => 'v1/',
     'components' => [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
@@ -29,9 +33,6 @@ $config = [
         ],
         'authManager' => [
             'class' => 'yii\rbac\DbManager',
-        ],
-        'assetManager' => [
-            //'baseUrl' => '/api/assets',
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
@@ -60,79 +61,20 @@ $config = [
             ],
         ],
         'db' => $db,
-        
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
-            'rules' => [
-                '' => 'site/index',
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => 'v1/auth',
-                    'pluralize' => false,
-                    'tokens' => [
-                        '{id}' => '<id:\d+>',
-                    ],
-                    'extraPatterns' => [
-                        'OPTIONS {id}' => 'options',
-                        'POST login' => 'login',
-                        'OPTIONS login' => 'options',
-                        'POST logout' => 'logout',
-                        'OPTIONS logout' => 'options',
-                        'POST register' => 'register',
-                        'OPTIONS register' => 'options',
-                        'POST forgot' => 'forgot',
-                        'OPTIONS forgot' => 'options',
-                    ]
-                ],
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => 'v1/user',
-                    'pluralize' => false,
-                    'tokens' => [
-                        '{id}' => '<id:\d+>',
-                    ],
-                    'extraPatterns' => [
-                        'OPTIONS {id}' => 'options',
-                        'GET profile' => 'profile',
-                        'POST profile' => 'profile',
-                        'OPTIONS profile' => 'options',
-                        'POST account' => 'account',
-                        'OPTIONS account' => 'options',
-                        'POST upload-avatar' => 'upload-avatar',
-                        'OPTIONS upload-avatar' => 'options',
-                        'GET index' => 'index',
-                        'OPTIONS index' => 'options',
-                        'GET update-user' => 'update-user',
-                        'POST update-user' => 'update-user',
-                        'OPTIONS update-user' => 'options',
-                        'DELETE delete-user' => 'delete-user',
-                        'OPTIONS delete-user' => 'options',
-                        'GET pt-right' => 'pt-right',
-                        'OPTIONS pt-right' => 'options',
-                    ]
-                ],
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => 'v1/queue',
-                    'pluralize' => false,
-                    'tokens' => [
-                        '{id}' => '<id:\d+>',
-                    ],
-                    'extraPatterns' => [
-                        'OPTIONS {id}' => 'options',
-                        'POST register' => 'register',
-                        'OPTIONS register' => 'options',
-                        'GET data-print' => 'data-print',
-                        'OPTIONS data-print' => 'options',
-                        'GET kiosk-list' => 'kiosk-list',
-                        'OPTIONS kiosk-list' => 'options',
-                    ]
-                ],
-            ],
+            'rules' => $urlRules
         ],
         'response' => [
             'class' => 'yii\web\Response',
+            'formatters' => [
+                \yii\web\Response::FORMAT_JSON => [
+                    'class' => 'yii\web\JsonResponseFormatter',
+                    'prettyPrint' => YII_DEBUG, // use "pretty" output in debug mode
+                    'encodeOptions' => JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+                ],
+            ],
             'on beforeSend' => function ($event) {
                 $response = $event->sender;
                 if ($response->format == 'html') {
@@ -175,7 +117,7 @@ $config = [
             'timeZone' => 'Asia/Bangkok'
         ],
         'nhso' => [
-            'class' => 'mongosoft\soapclient\Client',
+            'class' => 'mcomscience\soapclient\Client',
             'url' => 'http://ucws.nhso.go.th/ucwstokenp1/UCWSTokenP1?WSDL',
             'options' => [
                 'cache_wsdl' => WSDL_CACHE_NONE
@@ -187,7 +129,7 @@ $config = [
             'username' => 'root',
             'password' => 'root_db',
             'charset' => 'utf8',
-        ]
+        ],
     ],
     'modules' => [
         'v1' => [
@@ -209,6 +151,12 @@ $config = [
                 'RegistrationForm' => 'app\modules\v1\models\RegistrationForm',
                 'LoginForm' => 'app\modules\v1\models\LoginForm',
             ],
+        ],
+        'gridview' => [
+            'class' => '\kartik\grid\Module'
+        ],
+        'settings' => [
+            'class' => 'app\modules\settings\Module',
         ],
     ],
     'params' => $params,
