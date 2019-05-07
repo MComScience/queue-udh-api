@@ -1,6 +1,9 @@
 <?php
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use kartik\select2\Select2;
+use yii\helpers\ArrayHelper;
+use app\modules\v1\models\User;
 
 /* @var $this yii\web\View */
 /* @var $model app\modules\v1\models\TblKiosk */
@@ -14,6 +17,14 @@ use yii\widgets\ActiveForm;
     <?= $form->field($model, 'kiosk_name')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'kiosk_des')->textInput(['maxlength' => true]) ?>
+
+    <?= $form->field($model, 'user_id')->widget(Select2::classname(), [
+        'data' => ArrayHelper::map(User::find()->where(['role' => 10])->all(), 'id', 'username'),
+        'options' => ['placeholder' => 'Select a state ...'],
+        'pluginOptions' => [
+            'allowClear' => true
+        ],
+    ]); ?>
 
   
 	<?php if (!Yii::$app->request->isAjax){ ?>

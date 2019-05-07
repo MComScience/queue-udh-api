@@ -10,6 +10,7 @@ use yii\filters\auth\CompositeAuth;
 use yii\filters\Cors;
 use yii\web\Response;
 use app\filters\auth\HttpBearerAuth;
+use yii\filters\auth\QueryParamAuth;
 use yii\filters\AccessControl;
 use app\modules\v1\models\TblQueue;
 use yii\web\HttpException;
@@ -50,8 +51,8 @@ class QueueController extends ActiveController
             'class' => CompositeAuth::className(),
             'authMethods' => [
                 HttpBearerAuth::className(),
+                QueryParamAuth::className(),
             ],
-
         ];
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
@@ -91,7 +92,10 @@ class QueueController extends ActiveController
             'rules' => [
                 [
                     'allow' => true,
-                    'actions' => ['index', 'view', 'create', 'update', 'delete', 'departments', 'register'],
+                    'actions' => [
+                        'index', 'view', 'create', 'update', 'delete', 'departments', 'register',
+
+                    ],
                     'roles' => ['@'],
                 ],
             ],
@@ -182,7 +186,15 @@ class QueueController extends ActiveController
     // รายการตู้กดบัตรคิว
     public function actionKioskList()
     {
-        return TblKiosk::find()->all();
+        $response = [];
+        $kiosks = TblKiosk::find()->all();
+        foreach ($kiosks as $kiosk) {
+            $response[] = [
+                'kiosk' => $kiosk,
+                'auth_key' => $kiosk->user->auth_key
+            ];
+        }
+        return $response;
     }
 
     // ข้อมูลแผนก

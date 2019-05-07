@@ -115,6 +115,10 @@ class User extends BaseUser
 
     public static function findIdentityByAccessToken($token, $type = null)
 	{
+	    $user = static::findOne(['auth_key' => $token]);
+	    if($user){
+	        return $user;
+        }
 		$secret = static::getSecretKey();
 		// Decode token and transform it into array.
 		// Firebase\JWT\JWT throws exception if token can not be decoded

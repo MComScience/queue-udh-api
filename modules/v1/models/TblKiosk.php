@@ -10,6 +10,7 @@ use Yii;
  * @property int $kiosk_id
  * @property string $kiosk_name ชื่อ
  * @property string $kiosk_des รายละเอียด
+ * @property int $user_id ผู้ใช้งาน
  */
 class TblKiosk extends \yii\db\ActiveRecord
 {
@@ -27,7 +28,8 @@ class TblKiosk extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['kiosk_name'], 'required'],
+            [['kiosk_name', 'user_id'], 'required'],
+            [['user_id'], 'integer'],
             [['kiosk_name', 'kiosk_des'], 'string', 'max' => 255],
         ];
     }
@@ -41,6 +43,12 @@ class TblKiosk extends \yii\db\ActiveRecord
             'kiosk_id' => 'Kiosk ID',
             'kiosk_name' => 'ชื่อ',
             'kiosk_des' => 'รายละเอียด',
+            'user_id' => 'ผู้ใช้งาน',
         ];
+    }
+
+    public function getUser()
+    {
+        return $this->hasOne(User::className(), ['id' => 'user_id']);
     }
 }
