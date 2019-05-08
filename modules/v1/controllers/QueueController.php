@@ -84,7 +84,7 @@ class QueueController extends ActiveController
         // re-add authentication filter
         $behaviors['authenticator'] = $auth;
         // avoid authentication on CORS-pre-flight requests (HTTP OPTIONS method)
-        $behaviors['authenticator']['except'] = ['options', 'data-print', 'kiosk-list', 'register'];
+        $behaviors['authenticator']['except'] = ['options', 'data-print', 'kiosk-list'];
         // setup access
         $behaviors['access'] = [
             'class' => AccessControl::className(),
@@ -93,7 +93,7 @@ class QueueController extends ActiveController
                 [
                     'allow' => true,
                     'actions' => [
-                        'index', 'view', 'create', 'update', 'delete', 'departments',
+                        'index', 'view', 'create', 'update', 'delete', 'departments', 'register',
 
                     ],
                     'roles' => ['@'],
