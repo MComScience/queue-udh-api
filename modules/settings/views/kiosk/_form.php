@@ -4,7 +4,7 @@ use yii\widgets\ActiveForm;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use app\modules\v1\models\User;
-
+use app\modules\v1\models\TblDeptGroup;
 /* @var $this yii\web\View */
 /* @var $model app\modules\v1\models\TblKiosk */
 /* @var $form yii\widgets\ActiveForm */
@@ -25,6 +25,10 @@ use app\modules\v1\models\User;
             'allowClear' => true
         ],
     ]); ?>
+
+    <?= $form->field($model, 'departments')->checkboxList(ArrayHelper::map(TblDeptGroup::find()->all(), 'dept_group_id', 'dept_group_name'),[
+
+    ]) ?>
 
   
 	<?php if (!Yii::$app->request->isAjax){ ?>

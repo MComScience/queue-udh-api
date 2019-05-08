@@ -2,9 +2,12 @@
 
 namespace app\modules\v1\controllers;
 
+use app\modules\v1\models\FileStorageItem;
 use app\modules\v1\models\TblDept;
 use app\modules\v1\models\TblPatient;
 use Yii;
+use yii\db\Expression;
+use yii\helpers\FileHelper;
 use yii\rest\ActiveController;
 use yii\filters\auth\CompositeAuth;
 use yii\filters\Cors;
@@ -127,7 +130,11 @@ class QueueController extends ActiveController
                 $modelQueue->priority_id = $priority;
                 $modelQueue->queue_type = $params['queue_type'];
                 $modelQueue->queue_status_id = 1; // default รอเรียก
+
                 if ($modelQueue->save()) {
+                    if ($params['user']['photo']) {
+                        $this->savePhoto($params['user']['photo'], $modelPatient['patient_id']);
+                    }
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();
                     $response->setStatusCode(201);
@@ -171,6 +178,31 @@ class QueueController extends ActiveController
         } */
     }
 
+    private function savePhoto($photo, $patient_id)
+    {
+        $img = str_replace('data:image/png;base64,', '', $photo);
+        $img = str_replace(' ', '+', $img);
+        $data = base64_decode($img);
+        $security = Yii::$app->security->generateRandomString();
+        $filename = implode('.', [
+            $security,
+            'png'
+        ]);
+        $path = Yii::getAlias('@webroot/uploads/avatar/').$filename;
+        $f = file_put_contents($path, $data);
+        if($f){
+            $modelStorage = new FileStorageItem();
+            $modelStorage->base_url = '/uploads';
+            $modelStorage->path = '/avatar/'.$filename;
+            $modelStorage->type = FileHelper::getMimeType($path);
+            $modelStorage->size = filesize($path);
+            $modelStorage->name = $security;
+            $modelStorage->ref_id = $patient_id;
+            $modelStorage->created_at = new Expression('NOW()');
+            $modelStorage->save(false);
+        }
+    }
+
     // ข้อมูลการพิมพ์บัตรคิว
     public function actionDataPrint($id)
     {
@@ -198,14 +230,17 @@ class QueueController extends ActiveController
     }
 
     // ข้อมูลแผนก
-    public function actionDepartments()
+    public function actionDepartments($kioskId)
     {
-        $deptGroups = TblDeptGroup::find()->all();
+        $modelKiosk = $this->findModelKiosk($kioskId);
+        $depts = !empty($modelKiosk['departments']) ? Json::decode($modelKiosk['departments']) : [];
+        $deptGroups = TblDeptGroup::find()->where(['dept_group_id' => $depts])->all();
         $response = [];
         $response[] = [
             'dept_group' => ['dept_group_id' => time(), 'dept_group_name' => 'แผนกทั้งหมด'],
             'departments' => TblDept::find()->where([
-                'dept_status' => TblDept::STATUS_ACTIVE
+                'dept_status' => TblDept::STATUS_ACTIVE,
+                'dept_group_id' => $depts
             ])->all()
         ];
         foreach ($deptGroups as $deptGroup) {
