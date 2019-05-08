@@ -230,6 +230,51 @@ class UserController extends ActiveController
 
     public function actionPtRight($cid)
     {
+        /*$json = <<<JSON
+    {
+        "birthdate": "24860301",
+        "cardid": "ท7730356386",
+        "count_select": "0",
+        "expdate": "NoExp",
+        "fname": "ทองล้วน",
+        "hmain": "10671",
+        "hmain_name": "รพ.อุดรธานี",
+        "hmain_op": "10671",
+        "hmain_op_name": "รพ.อุดรธานี",
+        "hsub": "13906",
+        "hsub_name": "รพ.สต.บ้านหนองตะไก้ หมู่ที่ 04 ตำบลหนองไผ่",
+        "lname": "สำราญทอง",
+        "maininscl": "WEL",
+        "maininscl_main": "U",
+        "maininscl_name": "สิทธิหลักประกันสุขภาพแห่งชาติ (ยกเว้นการร่วมจ่ายค่าบริการ 30 บาท)",
+        "mastercup_id": "41012100002",
+        "nation": "099",
+        "paid_model": "1",
+        "person_id": "3410101798122",
+        "primary_amphur_name": "เมืองอุดรธานี",
+        "primary_moo": "06",
+        "primary_mooban_name": "หนองนาเจริญ",
+        "primary_province_name": "อุดรธานี",
+        "primary_tumbon_name": "หนองไผ่",
+        "primaryprovince": "4100",
+        "purchaseprovince": "4100",
+        "purchaseprovince_name": "อุดรธานี",
+        "sex": "1",
+        "startdate": "25481030",
+        "status": "004",
+        "subinscl": "77",
+        "subinscl_name": "ผู้มีอายุเกิน 60 ปีบริบูรณ์",
+        "title": "003",
+        "title_name": "นาย",
+        "ws_data_source": "NHSO",
+        "ws_date_request": "2019-04-24T20:41:43+07:00",
+        "ws_status": "NHSO-000001",
+        "ws_status_desc": "ok",
+        "wsid": "WS000007635974206",
+        "wsid_batch": "WSB00001203212584"
+    }
+JSON;*/
+
         $client = Yii::$app->nhso;
         $sql = "SELECT * FROM nhso_token ORDER BY updated_at DESC";
         $userToken = \Yii::$app->db2->createCommand($sql)->queryOne();
@@ -242,11 +287,11 @@ class UserController extends ActiveController
         $res = (array)$res;
         $data = (array)$res['return'];
         if (!$data) {
-            $data = ['status-system' => 'error', 'message' => 'RESPONSE FAILED'];
+            throw new HttpException(422, 'RESPONSE FAILED');
         } else if ($data['ws_status'] == 'NHSO-00003') {
-            $data = ['status-system' => 'error', 'message' => (isset($data['ws_status_desc']) ? $data['ws_status_desc'] : 'TOKEN EXPIRE')];
+            throw new HttpException(422, isset($data['ws_status_desc']) ? $data['ws_status_desc'] : 'TOKEN EXPIRE');
         } else if (empty($data['fname'])) {
-            $data = ['status-system' => 'error', 'message' => 'NOT FOUND IN NHSO'];
+            throw new HttpException(422, 'NOT FOUND IN NHSO');
         }
         return $data;
     }
