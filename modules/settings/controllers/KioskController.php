@@ -92,7 +92,7 @@ class KioskController extends Controller
             Yii::$app->response->format = Response::FORMAT_JSON;
             if ($request->isGet) {
                 return [
-                    'title' => "Create new TblKiosk",
+                    'title' => "เพิ่มรายการ",
                     'content' => $this->renderAjax('create', [
                         'model' => $model,
                     ]),
@@ -106,7 +106,7 @@ class KioskController extends Controller
                 if ($model->save()) {
                     return [
                         'forceReload' => '#crud-datatable-pjax',
-                        'title' => "Create new TblKiosk",
+                        'title' => "เพิ่มรายการ",
                         'content' => '<span class="text-success">Create TblKiosk success</span>',
                         'footer' => Html::button('Close', ['class' => 'btn btn-default pull-left', 'data-dismiss' => "modal"]) .
                             Html::a('Create More', ['create'], ['class' => 'btn btn-primary', 'role' => 'modal-remote'])
@@ -125,7 +125,7 @@ class KioskController extends Controller
                 }
             } else {
                 return [
-                    'title' => "Create new TblKiosk",
+                    'title' => "เพิ่มรายการ",
                     'content' => $this->renderAjax('create', [
                         'model' => $model,
                     ]),
@@ -169,7 +169,7 @@ class KioskController extends Controller
             Yii::$app->response->format = Response::FORMAT_JSON;
             if ($request->isGet) {
                 return [
-                    'title' => "Update TblKiosk #" . $id,
+                    'title' => "แก้ไขรายการ #" . $id,
                     'content' => $this->renderAjax('update', [
                         'model' => $model,
                     ]),
@@ -182,7 +182,7 @@ class KioskController extends Controller
                 if ($model->save()) {
                     return [
                         'forceReload' => '#crud-datatable-pjax',
-                        'title' => "TblKiosk #" . $id,
+                        'title' => "แก้ไขรายการ #" . $id,
                         'content' => $this->renderAjax('view', [
                             'model' => $model,
                         ]),
@@ -191,7 +191,7 @@ class KioskController extends Controller
                     ];
                 } else {
                     return [
-                        'title' => "Update TblKiosk #" . $id,
+                        'title' => "แก้ไขรายการ #" . $id,
                         'content' => $this->renderAjax('update', [
                             'model' => $model,
                         ]),
@@ -201,7 +201,7 @@ class KioskController extends Controller
                 }
             } else {
                 return [
-                    'title' => "Update TblKiosk #" . $id,
+                    'title' => "แก้ไขรายการ #" . $id,
                     'content' => $this->renderAjax('update', [
                         'model' => $model,
                     ]),
