@@ -117,6 +117,20 @@ class QueueController extends ActiveController
             throw new HttpException(422, 'ไม่พบข้อมูลแผนกในระบบคิว');
         }
         $modelDeptGroup = $this->findModelDeptGroup($modelDept['dept_group_id']);
+        if ($patient) {
+            if (($model = TblQueue::findOne([
+                    'dept_id' => $modelDept['dept_id'],
+                    'patient_id' => $patient['patient_id'],
+                    'queue_status_id' => 1])
+                ) !== null) {
+                return [
+                    'queue' => $model,
+                    'patient' => $modelPatient,
+                    'dept' => $modelDept,
+                    'dept_group' => $modelDeptGroup
+                ];
+            }
+        }
         $priority = $params['queue_type'] === 1 ? 1 : $params['priority'];
         $transaction = TblPatient::getDb()->beginTransaction();
         try {
@@ -188,12 +202,12 @@ class QueueController extends ActiveController
             $security,
             'png'
         ]);
-        $path = Yii::getAlias('@webroot/uploads/avatar/').$filename;
+        $path = Yii::getAlias('@webroot/uploads/avatar/') . $filename;
         $f = file_put_contents($path, $data);
-        if($f){
+        if ($f) {
             $modelStorage = new FileStorageItem();
             $modelStorage->base_url = '/uploads';
-            $modelStorage->path = '/avatar/'.$filename;
+            $modelStorage->path = '/avatar/' . $filename;
             $modelStorage->type = FileHelper::getMimeType($path);
             $modelStorage->size = filesize($path);
             $modelStorage->name = $security;
@@ -230,19 +244,29 @@ class QueueController extends ActiveController
     }
 
     // ข้อมูลแผนก
-    public function actionDepartments($kioskId)
+    public function actionDepartments($kioskId = null)
     {
-        $modelKiosk = $this->findModelKiosk($kioskId);
-        $depts = !empty($modelKiosk['departments']) ? Json::decode($modelKiosk['departments']) : [];
-        $deptGroups = TblDeptGroup::find()->where(['dept_group_id' => $depts])->all();
         $response = [];
-        $response[] = [
-            'dept_group' => ['dept_group_id' => time(), 'dept_group_name' => 'แผนกทั้งหมด'],
-            'departments' => TblDept::find()->where([
-                'dept_status' => TblDept::STATUS_ACTIVE,
-                'dept_group_id' => $depts
-            ])->all()
-        ];
+        if ($kioskId) {
+            $modelKiosk = $this->findModelKiosk($kioskId);
+            $depts = !empty($modelKiosk['departments']) ? Json::decode($modelKiosk['departments']) : [];
+            $deptGroups = TblDeptGroup::find()->where(['dept_group_id' => $depts])->all();
+            $response[] = [
+                'dept_group' => ['dept_group_id' => time(), 'dept_group_name' => 'แผนกทั้งหมด'],
+                'departments' => TblDept::find()->where([
+                    'dept_status' => TblDept::STATUS_ACTIVE,
+                    'dept_group_id' => $depts
+                ])->all()
+            ];
+        } else {
+            $deptGroups = TblDeptGroup::find()->all();
+            $response[] = [
+                'dept_group' => ['dept_group_id' => time(), 'dept_group_name' => 'แผนกทั้งหมด'],
+                'departments' => TblDept::find()->where([
+                    'dept_status' => TblDept::STATUS_ACTIVE,
+                ])->all()
+            ];
+        }
         foreach ($deptGroups as $deptGroup) {
             $departments = TblDept::find()->where([
                 'dept_group_id' => $deptGroup['dept_group_id'],
