@@ -11,6 +11,7 @@ use yii\db\ActiveRecord;
 use app\modules\v1\traits\ModelTrait;
 use app\modules\v1\components\AutoNumber;
 use app\modules\v1\behaviors\CoreMultiValueBehavior;
+
 /**
  * This is the model class for table "tbl_queue".
  *
@@ -30,6 +31,7 @@ use app\modules\v1\behaviors\CoreMultiValueBehavior;
 class TblQueue extends \yii\db\ActiveRecord
 {
     use ModelTrait;
+
     /**
      * {@inheritdoc}
      */
@@ -58,9 +60,9 @@ class TblQueue extends \yii\db\ActiveRecord
                     ActiveRecord::EVENT_BEFORE_INSERT => 'queue_no',
                 ],
                 'value' => function ($event) {
-                    if(empty($this->queue_no)){
+                    if (empty($this->queue_no)) {
                         return $this->generateNumber();
-                    }else{
+                    } else {
                         return $event->sender[$event->data];
                     }
                 },
@@ -136,7 +138,7 @@ class TblQueue extends \yii\db\ActiveRecord
     public function getQueueTypeName($type)
     {
         $types = $this->getQueueTypes();
-        return ArrayHelper::getValue($types,$type, '');
+        return ArrayHelper::getValue($types, $type, '');
     }
 
     // ประเภทคิว
@@ -151,9 +153,16 @@ class TblQueue extends \yii\db\ActiveRecord
     private function generateNumber()
     {
         $department = $this->findModelDept($this->dept_id); // แผนก
-        $maxId = $this->find()->where(['dept_id' => $this->dept_id, 'dept_group_id' => $this->dept_group_id])->max('queue_id');
+        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
+        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        $maxId = $this->find()->where([
+            'dept_id' => $this->dept_id,
+            'dept_group_id' => $this->dept_group_id
+        ])
+            ->andWhere(['between', 'created_at', $startDate, $endDate])
+            ->max('queue_id');
         $no = 1;
-        if($maxId) {
+        if ($maxId) {
             $modelQueue = $this->findOne($maxId);
             $no = $modelQueue['queue_no'];
         }
@@ -169,10 +178,10 @@ class TblQueue extends \yii\db\ActiveRecord
             $qid = array_search($maxqnum, $qnums);
         }*/
         $component = \Yii::createObject([
-            'class'     => AutoNumber::className(),
-            'prefix'    => $department ? $department['dept_prefix'] : 'A',
-            'number'    => $no,
-            'digit'     => $department ? (int)$department['dept_num_digit'] : 3,
+            'class' => AutoNumber::className(),
+            'prefix' => ($department && $this->priority_id == 1) ? $department['dept_prefix'] : 'A',
+            'number' => $no,
+            'digit' => $department ? (int)$department['dept_num_digit'] : 3,
         ]);
         return $component->generate();
     }

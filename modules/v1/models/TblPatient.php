@@ -3,8 +3,11 @@
 namespace app\modules\v1\models;
 
 use Yii;
+use yii\behaviors\BlameableBehavior;
+use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 use app\modules\v1\behaviors\CoreMultiValueBehavior;
+use yii\db\Expression;
 use yii\helpers\Json;
 /**
  * This is the model class for table "tbl_patient".
@@ -37,6 +40,17 @@ class TblPatient extends \yii\db\ActiveRecord
     public function behaviors()
     {
         return [
+            [
+                'class' => TimestampBehavior::className(),
+                'createdAtAttribute' => 'created_at',
+                'updatedAtAttribute' => 'updated_at',
+                'value' => new Expression('NOW()'),
+            ],
+            [
+                'class' => BlameableBehavior::className(),
+                'createdByAttribute' => 'created_by',
+                'updatedByAttribute' => 'updated_by',
+            ],
             [
                 'class' => CoreMultiValueBehavior::className(),
                 'attributes' => [

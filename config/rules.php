@@ -64,6 +64,10 @@ return [
             'OPTIONS kiosk-list' => 'options',
             'GET departments' => 'departments',
             'OPTIONS departments' => 'options',
+            'GET priority' => 'priority',
+            'OPTIONS priority' => 'options',
+            'GET patient-register' => 'patient-register',
+            'OPTIONS patient-register' => 'options',
         ]
     ],
 ];

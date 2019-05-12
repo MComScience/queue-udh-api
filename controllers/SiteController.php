@@ -10,9 +10,13 @@ use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
 use yii\helpers\Json;
+use app\modules\v1\traits\ModelTrait;
+use yii\httpclient\Client;
 
 class SiteController extends Controller
 {
+    use ModelTrait;
+
     /**
      * {@inheritdoc}
      */
@@ -177,6 +181,49 @@ class SiteController extends Controller
                 self::recursiveDelete($newPath);
             }
             return @rmdir($path);
+        }
+    }
+
+    public function actionPrint($id)
+    {
+        $model = $this->findModelQueue($id);
+        $modelPatient = $this->findModelPatient($model['patient_id']);
+        return $this->renderAjax('print', [
+            'model' => $model,
+            'department' => $model->dept,
+            'patient' => $modelPatient
+        ]);
+    }
+
+    public function actionPrintOneStop($msg, $q)
+    {
+        $patient = [
+            'hn' => '-',
+            'fullname' => '-'
+        ];
+        if ($msg !== 'ไม่พบข้อมูลผู้รับบริการ กรุณากรอกแบบฟอร์มที่ One stop service') {
+            $client = new Client(['baseUrl' => 'http://10.188.231.11:8081/api']);
+            $response = $client->createRequest()
+                ->setMethod('GET')
+                ->setUrl('/kiosk/get-pt-profile?q=' . $q)
+                ->addHeaders(['content-type' => 'application/json'])
+                ->addHeaders(['X-Access-Token' => '6615e94372943853d7dad7a3d847440e'])
+                ->send();
+            if ($response->isOk) {
+                $data = $response->getData();
+                if ($data){
+                    $patient = $data['data'];
+                }
+            }
+            return $this->renderAjax('print-one-stop', [
+                'patient' => $patient,
+                'msg' => $msg
+            ]);
+        } else {
+            return $this->renderAjax('print-one-stop', [
+                'patient' => $patient,
+                'msg' => $msg
+            ]);
         }
     }
 }

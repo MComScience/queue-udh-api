@@ -5,8 +5,10 @@ namespace app\modules\v1\controllers;
 use app\modules\v1\models\FileStorageItem;
 use app\modules\v1\models\TblDept;
 use app\modules\v1\models\TblPatient;
+use app\modules\v1\models\TblPriority;
 use Yii;
 use yii\db\Expression;
+use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 use yii\rest\ActiveController;
 use yii\filters\auth\CompositeAuth;
@@ -68,7 +70,9 @@ class QueueController extends ActiveController
                 'register' => ['POST'],
                 'data-print' => ['GET'],
                 'kiosk-list' => ['GET'],
-                'departments' => ['GET']
+                'departments' => ['GET'],
+                'priority' => ['GET'],
+                'patient-register' => ['GET']
             ],
         ];
         // remove authentication filter
@@ -87,7 +91,7 @@ class QueueController extends ActiveController
         // re-add authentication filter
         $behaviors['authenticator'] = $auth;
         // avoid authentication on CORS-pre-flight requests (HTTP OPTIONS method)
-        $behaviors['authenticator']['except'] = ['options', 'data-print', 'kiosk-list'];
+        $behaviors['authenticator']['except'] = ['options', 'data-print', 'kiosk-list', 'priority', 'patient-register'];
         // setup access
         $behaviors['access'] = [
             'class' => AccessControl::className(),
@@ -110,30 +114,38 @@ class QueueController extends ActiveController
     public function actionRegister()
     {
         $params = \Yii::$app->getRequest()->getBodyParams();
-        $patient = TblPatient::findOne(['cid' => $params['user']['cid']]);
-        $modelPatient = $patient ? $patient : new TblPatient();
         $modelDept = TblDept::findOne(['dept_id' => $params['department']['dept_code']]);
         if (!$modelDept) {
             throw new HttpException(422, 'ไม่พบข้อมูลแผนกในระบบคิว');
         }
+        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
+        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        $rows = (new \yii\db\Query())
+            ->select(['tbl_queue.*'])
+            ->from('tbl_queue')
+            ->where([
+                'tbl_queue.dept_id' => $modelDept['dept_id'],
+                'tbl_patient.cid' => $params['user']['cid']
+            ])
+            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
+            ->one();
         $modelDeptGroup = $this->findModelDeptGroup($modelDept['dept_group_id']);
-        if ($patient) {
-            if (($model = TblQueue::findOne([
-                    'dept_id' => $modelDept['dept_id'],
-                    'patient_id' => $patient['patient_id'],
-                    'queue_status_id' => 1])
-                ) !== null) {
-                return [
-                    'queue' => $model,
-                    'patient' => $modelPatient,
-                    'dept' => $modelDept,
-                    'dept_group' => $modelDeptGroup
-                ];
-            }
+        if ($rows && $rows !== null) {
+            $modelPatient = $this->findModelPatient($rows['patient_id']);
+            $modelPatient->setAttributes($params['user']);
+            $modelPatient->save();
+            return [
+                'queue' => $rows,
+                'patient' => $modelPatient,
+                'dept' => $modelDept,
+                'dept_group' => $modelDeptGroup
+            ];
         }
-        $priority = $params['queue_type'] === 1 ? 1 : $params['priority'];
+        //$priority = $params['queue_type'] === 1 ? 1 : $params['priority'];
         $transaction = TblPatient::getDb()->beginTransaction();
         try {
+            $modelPatient = new TblPatient();
             $modelPatient->setAttributes($params['user']);
             $modelPatient->appoint = empty($params['user']['appoint']) ? '' : Json::encode($params['user']['appoint']);
             if ($modelPatient->save()) {
@@ -141,7 +153,7 @@ class QueueController extends ActiveController
                 $modelQueue->patient_id = $modelPatient['patient_id'];
                 $modelQueue->dept_group_id = $modelDeptGroup['dept_group_id'];
                 $modelQueue->dept_id = $modelDept['dept_id'];
-                $modelQueue->priority_id = $priority;
+                $modelQueue->priority_id = $params['priority'];
                 $modelQueue->queue_type = $params['queue_type'];
                 $modelQueue->queue_status_id = 1; // default รอเรียก
 
@@ -278,5 +290,53 @@ class QueueController extends ActiveController
             ];
         }
         return $response;
+    }
+
+    // ประเภทคิว
+    public function actionPriority()
+    {
+        return ArrayHelper::map(TblPriority::find()->all(), 'priority_id', 'priority_name');
+    }
+
+    public function actionPatientRegister($q)
+    {
+        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
+        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        // hn
+        if (strlen($q) < 13) {
+            $patient = TblPatient::find()
+                ->where(['hn' => $q])
+                ->andWhere(['between', 'created_at', $startDate, $endDate])
+                ->orderBy('patient_id desc')
+                ->one();
+        } else { // cid
+            $patient = TblPatient::find()
+                ->where(['cid' => $q])
+                ->andWhere(['between', 'created_at', $startDate, $endDate])
+                ->orderBy('patient_id desc')
+                ->one();
+        }
+        if (!$patient) {
+            return [
+                'message' => 'ไม่พบข้อมูลผู้ป่วย'
+            ];
+        }
+        $queues = (new \yii\db\Query())
+            ->select(['tbl_queue.*', 'tbl_dept.*'])
+            ->from('tbl_queue')
+            ->where(['patient_id' => $patient['patient_id']])
+            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
+            ->all();
+        if (count($queues) == 0 && !$queues){
+            return [
+                'message' => 'ไม่พบข้อมูลคิว'
+            ];
+        }else{
+            return [
+                'message' => 'success',
+                'queues' => $queues
+            ];
+        }
     }
 }
