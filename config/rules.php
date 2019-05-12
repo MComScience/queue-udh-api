@@ -70,6 +70,8 @@ return [
             'OPTIONS patient-register' => 'options',
             'GET dashboard' => 'dashboard',
             'OPTIONS dashboard' => 'options',
+            'GET list-all' => 'list-all',
+            'OPTIONS list-all' => 'options',
         ]
     ],
 ];

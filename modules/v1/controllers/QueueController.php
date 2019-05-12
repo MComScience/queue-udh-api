@@ -10,6 +10,7 @@ use Yii;
 use yii\db\Expression;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
+use yii\helpers\Html;
 use yii\rest\ActiveController;
 use yii\filters\auth\CompositeAuth;
 use yii\filters\Cors;
@@ -73,7 +74,8 @@ class QueueController extends ActiveController
                 'departments' => ['GET'],
                 'priority' => ['GET'],
                 'patient-register' => ['GET'],
-                'dashboard' => ['GET']
+                'dashboard' => ['GET'],
+                'list-all' => ['GET']
             ],
         ];
         // remove authentication filter
@@ -105,7 +107,7 @@ class QueueController extends ActiveController
                     'allow' => true,
                     'actions' => [
                         'index', 'view', 'create', 'update', 'delete', 'departments', 'register',
-
+                        'list-all'
                     ],
                     'roles' => ['@'],
                 ],
@@ -333,11 +335,11 @@ class QueueController extends ActiveController
             ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
             ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
             ->all();
-        if (count($queues) == 0 && !$queues){
+        if (count($queues) == 0 && !$queues) {
             return [
                 'message' => 'ไม่พบข้อมูลคิว'
             ];
-        }else{
+        } else {
             return [
                 'message' => 'success',
                 'queues' => $queues
@@ -357,7 +359,7 @@ class QueueController extends ActiveController
         // วันที่สิ้นสุด
         $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
         // ถ้ามีการค้นหาจากวันที่
-        if(!empty($q)) {
+        if (!empty($q)) {
             // วันที่เริ่ม
             $startDate = $q . ' 00:00:00';
             // วันที่สิ้นสุด
@@ -388,7 +390,7 @@ class QueueController extends ActiveController
                     'dept_name' => $department['dept_name'],
                     'count' => $count
                 ];
-                $y = $countAll > 0 ? (float) number_format(($count/$countAll) * 100, 2) : 0;
+                $y = $countAll > 0 ? (float)number_format(($count / $countAll) * 100, 2) : 0;
                 $seriesPie[] = [
                     'name' => $department['dept_name'],
                     'y' => $y,
@@ -421,5 +423,45 @@ class QueueController extends ActiveController
             'seriesColumn' => $seriesColumn,
             'seriesDrilldown' => $seriesDrilldown
         ];
+    }
+
+    public function actionListAll($q = '')
+    {
+        // วันที่เริ่ม
+        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
+        // วันที่สิ้นสุด
+        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        // ถ้ามีการค้นหาจากวันที่
+        if (!empty($q)) {
+            // วันที่เริ่ม
+            $startDate = $q . ' 00:00:00';
+            // วันที่สิ้นสุด
+            $endDate = $q . ' 23:59:59';
+        }
+        $rows = (new \yii\db\Query())
+            ->select([
+                'tbl_queue.queue_id',
+                'tbl_queue.queue_no',
+                'DATE_FORMAT(tbl_queue.created_at, "%H:%i") as created_time',
+                'tbl_patient.hn',
+                'tbl_patient.fullname',
+                'tbl_dept.dept_name',
+                'file_storage_item.base_url',
+                'file_storage_item.path'
+            ])
+            ->from('tbl_queue')
+            ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
+            ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
+            ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
+            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->orderBy('tbl_queue.created_at ASC')
+            ->all();
+        $response = [];
+        foreach ($rows as $row) {
+            $response[] = ArrayHelper::merge($row, [
+                'base_url' => !empty($row['base_url']) ? Url::base(true) . $row['base_url'] . $row['path'] : ''
+            ]);
+        }
+        return $response;
     }
 }
