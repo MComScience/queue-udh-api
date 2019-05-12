@@ -72,7 +72,8 @@ class QueueController extends ActiveController
                 'kiosk-list' => ['GET'],
                 'departments' => ['GET'],
                 'priority' => ['GET'],
-                'patient-register' => ['GET']
+                'patient-register' => ['GET'],
+                'dashboard' => ['GET']
             ],
         ];
         // remove authentication filter
@@ -91,7 +92,10 @@ class QueueController extends ActiveController
         // re-add authentication filter
         $behaviors['authenticator'] = $auth;
         // avoid authentication on CORS-pre-flight requests (HTTP OPTIONS method)
-        $behaviors['authenticator']['except'] = ['options', 'data-print', 'kiosk-list', 'priority', 'patient-register'];
+        $behaviors['authenticator']['except'] = [
+            'options', 'data-print', 'kiosk-list', 'priority', 'patient-register',
+            'dashboard'
+        ];
         // setup access
         $behaviors['access'] = [
             'class' => AccessControl::className(),
@@ -338,5 +342,83 @@ class QueueController extends ActiveController
                 'queues' => $queues
             ];
         }
+    }
+
+    public function actionDashboard($q = '')
+    {
+        $itemDepts = [];
+        $seriesPie = [];
+        $seriesColumn = [];
+        $seriesDrilldown = [];
+        $deptGroups = TblDeptGroup::find()->all();
+        // วันที่เริ่ม
+        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
+        // วันที่สิ้นสุด
+        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        // ถ้ามีการค้นหาจากวันที่
+        if(!empty($q)) {
+            // วันที่เริ่ม
+            $startDate = $q . ' 00:00:00';
+            // วันที่สิ้นสุด
+            $endDate = $q . ' 23:59:59';
+        }
+        $countAll = TblQueue::find()->andWhere(['between', 'created_at', $startDate, $endDate])->count();
+        $itemDepts[] = [
+            'dept_group_name' => 'ทั้งหมด',
+            'items' => [
+                [
+                    'dept_name' => 'รวมจำนวนทั้งหมด',
+                    'count' => $countAll
+                ]
+            ]
+        ];
+        // นับคิวแต่ละแผนก ** เฉพาะแผนกที่ Active
+        foreach ($deptGroups as $deptGroup) {
+            $deptArr = [];
+            $countDept = 0;
+            $dataDrilldown = [];
+            // แผนก
+            $departments = TblDept::find()->where(['dept_status' => 1, 'dept_group_id' => $deptGroup['dept_group_id']])->all();
+            foreach ($departments as $k => $department) {
+                $count = TblQueue::find()->where([
+                    'dept_id' => $department['dept_id'],
+                ])->andWhere(['between', 'created_at', $startDate, $endDate])->count();
+                $deptArr[] = [
+                    'dept_name' => $department['dept_name'],
+                    'count' => $count
+                ];
+                $y = $countAll > 0 ? (float) number_format(($count/$countAll) * 100, 2) : 0;
+                $seriesPie[] = [
+                    'name' => $department['dept_name'],
+                    'y' => $y,
+                ];
+                $countDept = $countDept + $count;
+                $dataDrilldown[] = [
+                    $department['dept_name'],
+                    intval($count)
+                ];
+            }
+            $itemDepts[] = [
+                'dept_group_name' => $deptGroup['dept_group_name'],
+                'items' => $deptArr
+            ];
+            $seriesColumn[] = [
+                'name' => $deptGroup['dept_group_name'],
+                'y' => $countDept,
+                'drilldown' => $deptGroup['dept_group_name']
+            ];
+            $seriesDrilldown[] = [
+                'name' => $deptGroup['dept_group_name'],
+                'id' => $deptGroup['dept_group_name'],
+                'data' => $dataDrilldown
+            ];
+        }
+        return [
+            'itemDepts' => $itemDepts, // จำนวนคิวแต่ละแผนก
+            'countAll' => $countAll,
+            'seriesPie' => $seriesPie,
+            'seriesColumn' => $seriesColumn,
+            'seriesDrilldown' => $seriesDrilldown
+        ];
     }
 }

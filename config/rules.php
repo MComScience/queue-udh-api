@@ -68,6 +68,8 @@ return [
             'OPTIONS priority' => 'options',
             'GET patient-register' => 'patient-register',
             'OPTIONS patient-register' => 'options',
+            'GET dashboard' => 'dashboard',
+            'OPTIONS dashboard' => 'options',
         ]
     ],
 ];
