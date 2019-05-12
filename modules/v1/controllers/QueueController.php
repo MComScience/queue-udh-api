@@ -312,14 +312,14 @@ class QueueController extends ActiveController
             $patient = TblPatient::find()
                 ->where(['hn' => $q])
                 ->andWhere(['between', 'created_at', $startDate, $endDate])
-                ->orderBy('patient_id desc')
-                ->one();
+                //->orderBy('patient_id desc')
+                ->all();
         } else { // cid
             $patient = TblPatient::find()
                 ->where(['cid' => $q])
                 ->andWhere(['between', 'created_at', $startDate, $endDate])
-                ->orderBy('patient_id desc')
-                ->one();
+                //->orderBy('patient_id desc')
+                ->all();
         }
         if (!$patient) {
             return [
@@ -329,7 +329,7 @@ class QueueController extends ActiveController
         $queues = (new \yii\db\Query())
             ->select(['tbl_queue.*', 'tbl_dept.*'])
             ->from('tbl_queue')
-            ->where(['patient_id' => $patient['patient_id']])
+            ->where(['patient_id' => ArrayHelper::getColumn($patient, 'patient_id')])
             ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
             ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
             ->all();
