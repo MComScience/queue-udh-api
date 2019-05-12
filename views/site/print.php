@@ -226,14 +226,14 @@ JsBarcode("#barcode", {$patient->hn}, {
   margin: 0
 });
 //
-new QRCode(document.getElementById("qrcode"), {
+/*new QRCode(document.getElementById("qrcode"), {
 	text: window.location.origin + '/scan-qrcode/'+ {$model->queue_id},
 	width: 100,
 	height: 100,
 	colorDark : "#000000",
 	colorLight : "#ffffff",
 	correctLevel : QRCode.CorrectLevel.H
-});
+});*/
 
 
 $(window).on('load', function() {
