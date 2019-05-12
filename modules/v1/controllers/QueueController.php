@@ -138,6 +138,7 @@ class QueueController extends ActiveController
         if ($rows && $rows !== null) {
             $modelPatient = $this->findModelPatient($rows['patient_id']);
             $modelPatient->setAttributes($params['user']);
+            $modelPatient->appoint = empty($params['user']['appoint']) ? '' : Json::encode($params['user']['appoint']);
             $modelPatient->save();
             return [
                 'queue' => $rows,
