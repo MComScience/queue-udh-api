@@ -11,6 +11,7 @@ use yii\db\Expression;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\rest\ActiveController;
 use yii\filters\auth\CompositeAuth;
 use yii\filters\Cors;
