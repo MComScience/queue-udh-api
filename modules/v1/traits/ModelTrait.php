@@ -151,6 +151,6 @@ trait ModelTrait
 
     private function handleError($className)
     {
-        throw new NotFoundHttpException('The requested data does not exist. `'+$className+'`');
+        throw new NotFoundHttpException('The requested data does not exist.');
     }
 }
