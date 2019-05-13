@@ -47,7 +47,7 @@ class TblQueue extends \yii\db\ActiveRecord
                 'class' => TimestampBehavior::className(),
                 'createdAtAttribute' => 'created_at',
                 'updatedAtAttribute' => 'updated_at',
-                'value' => new Expression('NOW()'),
+                'value' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'),
             ],
             [
                 'class' => BlameableBehavior::className(),

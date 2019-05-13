@@ -120,9 +120,13 @@ class QueueController extends ActiveController
     // ลงทะเบียนคิว
     public function actionRegister()
     {
+        $logger = Yii::$app->logger->getLogger();
         $params = \Yii::$app->getRequest()->getBodyParams();
+        $imgUrl = '';
         $modelDept = TblDept::findOne(['dept_id' => $params['department']['dept_code']]);
         if (!$modelDept) {
+            $logger->error('Register Queue', ['msg' => 'ไม่พบข้อมูลแผนกในระบบคิว', 'dept_code' => $params['department']['dept_code']]);
+            Yii::$app->notify->sendMessage('ไม่พบข้อมูลแผนกในระบบคิว! '."\n". Json::encode($params));
             throw new HttpException(422, 'ไม่พบข้อมูลแผนกในระบบคิว');
         }
         $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
@@ -138,16 +142,23 @@ class QueueController extends ActiveController
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
             ->one();
         $modelDeptGroup = $this->findModelDeptGroup($modelDept['dept_group_id']);
+        // ถ้าลงทะเบียนแผนกเดิม
         if ($rows && $rows !== null) {
             $modelPatient = $this->findModelPatient($rows['patient_id']);
             $modelPatient->setAttributes($params['user']);
             $modelPatient->appoint = empty($params['user']['appoint']) ? '' : Json::encode($params['user']['appoint']);
             $modelPatient->save();
+
+            $modelStorage = FileStorageItem::findOne(['ref_id' => $rows['patient_id']]);
+            if($modelStorage) {
+                $imgUrl = Url::base(true) . $modelStorage['base_url'] . $modelStorage['path'];
+            }
             return [
                 'queue' => $rows,
                 'patient' => $modelPatient,
                 'dept' => $modelDept,
-                'dept_group' => $modelDeptGroup
+                'dept_group' => $modelDeptGroup,
+                'imgUrl' => $imgUrl
             ];
         }
         //$priority = $params['queue_type'] === 1 ? 1 : $params['priority'];
@@ -166,8 +177,8 @@ class QueueController extends ActiveController
                 $modelQueue->queue_status_id = 1; // default รอเรียก
 
                 if ($modelQueue->save()) {
-                    if ($params['user']['photo']) {
-                        $this->savePhoto($params['user']['photo'], $modelPatient['patient_id']);
+                    if (!empty($params['user']['photo'])) {
+                        $imgUrl = $this->savePhoto($params['user']['photo'], $modelPatient['patient_id']);
                     }
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();
@@ -176,40 +187,39 @@ class QueueController extends ActiveController
                         'queue' => $modelQueue,
                         'patient' => $modelPatient,
                         'dept' => $modelDept,
-                        'dept_group' => $modelDeptGroup
+                        'dept_group' => $modelDeptGroup,
+                        'imgUrl' => $imgUrl
                     ];
                 } else {
                     $transaction->rollBack();
+                    $logdata = [
+                        'msg' => $modelQueue->errors,
+                        'data' => $params
+                    ];
+                    $logger->error('Register Queue', $logdata);
+                    Yii::$app->notify->sendMessage('ลงทะเบียนคิวไม่สำเร็จ! '."\n". Json::encode($logdata));
                     TblPatient::findOne($modelPatient['patient_id'])->delete();
                     throw new HttpException(422, Json::encode($modelQueue->errors));
                 }
             } else {
                 $transaction->rollBack();
+                $logdata = [
+                    'msg' => $modelPatient->errors,
+                    'data' => $params
+                ];
+                $logger->error('Register Queue', $logdata);
+                Yii::$app->notify->sendMessage('ลงทะเบียนคิวไม่สำเร็จ! '."\n". Json::encode($logdata));
                 throw new HttpException(422, Json::encode($modelPatient->errors));
             }
         } catch (\Exception $e) {
             $transaction->rollBack();
+            $logger->error('Register Queue', $e);
             throw $e;
         } catch (\Throwable $e) {
             $transaction->rollBack();
+            $logger->error('Register Queue', $e);
             throw $e;
         }
-        /* $model = new TblQueue();
-        $user = $request->post('user');
-        $department = $request->post('department');
-        $model->setAttributes([
-            'queue_hn' => $user['hn'],
-            'fullname' => $user['fullname'],
-            'department_code' => $department['dept_code'],
-            'user_info' => Json::encode($user),
-        ]);
-        $model->load($params, '');
-        if($model->validate() && $model->save()) {
-            return $model;
-        } else {
-            // Validation error
-            throw new HttpException(400, Json::encode($model->errors));
-        } */
     }
 
     private function savePhoto($photo, $patient_id)
@@ -233,8 +243,12 @@ class QueueController extends ActiveController
             $modelStorage->size = filesize($path);
             $modelStorage->name = $security;
             $modelStorage->ref_id = $patient_id;
-            $modelStorage->created_at = new Expression('NOW()');
-            $modelStorage->save(false);
+            $modelStorage->created_at = Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s');
+            if($modelStorage->save()){
+                return Url::base(true) . $modelStorage['base_url'] . $modelStorage['path'];
+            }
+        } else {
+            return '';
         }
     }
 

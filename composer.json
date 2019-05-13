@@ -28,7 +28,12 @@
         "mootensai/yii2-enhanced-gii": "dev-master",
         "kartik-v/yii2-mpdf": "^1.0",
         "johnitvn/yii2-ajaxcrud": "*",
-        "m-comscience/yii2-soap-client": "@dev"
+        "m-comscience/yii2-soap-client": "@dev",
+        "mihaildev/yii2-elfinder": "*",
+        "alexantr/yii2-elfinder": "^1.5",
+        "monolog/monolog": "^1.24",
+        "yiisoft/yii2-redis": "^2.0",
+        "bower-asset/jsbarcode": "*"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

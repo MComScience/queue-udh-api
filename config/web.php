@@ -22,6 +22,21 @@ $config = [
     'timeZone' => 'Asia/Bangkok', // ตั้งค่า TimeZone
     //'sourceLanguage' => 'th-TH',
     'defaultRoute' => 'v1/',
+    'controllerMap' => [
+        'file-manager-elfinder' => [
+            'class' => '\mihaildev\elfinder\Controller',
+            'access' => ['@'],
+            'disabledCommands' => ['netmount'],
+            'roots' => [
+                [
+                    'baseUrl'=>'@web',
+                    'basePath'=>'@webroot',
+                    'path' => '/',
+                    'access' => ['read' => 'Admin', 'write' => 'Admin']
+                ]
+            ]
+        ]
+    ],
     'components' => [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
@@ -35,7 +50,15 @@ $config = [
             'class' => 'yii\rbac\DbManager',
         ],
         'cache' => [
-            'class' => 'yii\caching\FileCache',
+            // 'class' => 'yii\caching\FileCache',
+            'class' => 'yii\redis\Cache',
+            'redis' => 'redis'
+        ],
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => 'redis',
+            'port' => 6379,
+            'database' => 0,
         ],
         'user' => [
             'identityClass' => 'app\modules\v1\models\User',
@@ -130,6 +153,13 @@ $config = [
             'password' => 'root_db',
             'charset' => 'utf8',
         ],
+        'logger' => [
+            'class' => 'app\components\Logger',
+            'log_name' => 'api-log'
+        ],
+        'notify' => [
+            'class' => 'app\components\LineNotify'
+        ],
     ],
     'modules' => [
         'v1' => [
@@ -158,18 +188,21 @@ $config = [
         'settings' => [
             'class' => 'app\modules\settings\Module',
         ],
+        'file' => [
+            'class' => 'app\modules\file\Module',
+        ],
     ],
     'params' => $params,
 ];
 
 if (YII_ENV_DEV) {
     // configuration adjustments for 'dev' environment
-    $config['bootstrap'][] = 'debug';
+    /*$config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
         // uncomment the following to add your IP if you are not connecting from localhost.
         //'allowedIPs' => ['127.0.0.1', '::1'],
-    ];
+    ];*/
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [

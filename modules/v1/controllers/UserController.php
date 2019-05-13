@@ -217,9 +217,12 @@ class UserController extends ActiveController
 
     public function actionDeleteUser($id)
     {
+        $logger = Yii::$app->logger->getLogger();
         if ($id == \Yii::$app->user->getId()) {
+            $logger->info('Delete User', ['msg' => \Yii::t('user', 'You can not remove your own account'), 'id' => $id]);
             throw new HttpException(422, \Yii::t('user', 'You can not remove your own account'));
         } else {
+            $logger->info('Delete User', ['msg' => \Yii::t('user', 'User has been deleted'), 'id' => $id]);
             $model = $this->findModel($id);
             $model->delete();
             return [
@@ -230,6 +233,7 @@ class UserController extends ActiveController
 
     public function actionPtRight($cid)
     {
+        $logger = Yii::$app->logger->getLogger();
         /*$json = <<<JSON
     {
         "birthdate": "24860301",
@@ -273,8 +277,8 @@ class UserController extends ActiveController
         "wsid": "WS000007635974206",
         "wsid_batch": "WSB00001203212584"
     }
-JSON;*/
-
+JSON;
+        return Json::decode($json);*/
         $client = Yii::$app->nhso;
         $sql = "SELECT * FROM nhso_token ORDER BY updated_at DESC";
         $userToken = \Yii::$app->db2->createCommand($sql)->queryOne();
@@ -287,10 +291,13 @@ JSON;*/
         $res = (array)$res;
         $data = (array)$res['return'];
         if (!$data) {
+            $logger->info('pt-right', ['msg' => 'RESPONSE FAILED', 'cid' => $cid, 'data' => $data]);
             throw new HttpException(422, 'RESPONSE FAILED');
         } else if ($data['ws_status'] == 'NHSO-00003') {
+            $logger->info('pt-right', ['msg' => isset($data['ws_status_desc']) ? $data['ws_status_desc'] : 'TOKEN EXPIRE', 'cid' => $cid, 'data' => $data]);
             throw new HttpException(422, isset($data['ws_status_desc']) ? $data['ws_status_desc'] : 'TOKEN EXPIRE');
         } else if (empty($data['fname'])) {
+            $logger->info('pt-right', ['msg' => 'NOT FOUND IN NHSO', 'cid' => $cid, 'data' => $data]);
             throw new HttpException(422, 'NOT FOUND IN NHSO');
         }
         return $data;

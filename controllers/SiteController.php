@@ -66,7 +66,20 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
+        //return Json::encode($this->yearsMonthsBetween('2015-01-02', '2019-05-05'));
         return $this->render('index');
+    }
+
+    private function yearsMonthsBetween($start_date, $end_date)
+    {
+        $d1 = new \DateTime( $start_date );
+        $d2 = new \DateTime( $end_date );
+
+        $diff = $d2->diff( $d1 );
+        return [
+            'years' => $diff->y,
+            'months' => $diff->m,
+        ];
     }
 
     /**
@@ -197,6 +210,7 @@ class SiteController extends Controller
 
     public function actionPrintOneStop($msg, $q)
     {
+        $logger = Yii::$app->logger->getLogger();
         $patient = [
             'hn' => '-',
             'fullname' => '-'
@@ -215,11 +229,21 @@ class SiteController extends Controller
                     $patient = $data['data'];
                 }
             }
+            // save log
+            $logger->info('One stop service', [
+                'patient' => $patient,
+                'msg' => $msg
+            ]);
             return $this->renderAjax('print-one-stop', [
                 'patient' => $patient,
                 'msg' => $msg
             ]);
         } else {
+            // save log
+            $logger->info('One stop service', [
+                'patient' => $patient,
+                'msg' => $msg
+            ]);
             return $this->renderAjax('print-one-stop', [
                 'patient' => $patient,
                 'msg' => $msg
