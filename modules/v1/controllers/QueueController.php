@@ -215,12 +215,13 @@ class QueueController extends ActiveController
     private function savePhoto($photo, $patient_id)
     {
         $img = str_replace('data:image/png;base64,', '', $photo);
+        $img = str_replace('data:image/jpeg;base64,', '', $photo);
         $img = str_replace(' ', '+', $img);
         $data = base64_decode($img);
         $security = Yii::$app->security->generateRandomString();
         $filename = implode('.', [
             $security,
-            'png'
+            'jpg'
         ]);
         $path = Yii::getAlias('@webroot/uploads/avatar/') . $filename;
         $f = file_put_contents($path, $data);
