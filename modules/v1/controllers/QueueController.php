@@ -184,7 +184,7 @@ class QueueController extends ActiveController
                     $response = \Yii::$app->getResponse();
                     $response->setStatusCode(201);
                     return [
-                        'queue' => $rows, // ข้อมูลคิว
+                        'queue' => $modelQueue, // ข้อมูลคิว
                         'patient' => $modelPatient, // ข้อมูลผู้ป่วย
                         'dept' => $modelDept, // ข้อมูลแผนก
                         'dept_group' => $modelDeptGroup, // ข้อมูลกลุ่มแผนก
