@@ -33,7 +33,10 @@
         "alexantr/yii2-elfinder": "^1.5",
         "monolog/monolog": "^1.24",
         "yiisoft/yii2-redis": "^2.0",
-        "bower-asset/jsbarcode": "*"
+        "bower-asset/jsbarcode": "*",
+        "trntv/yii2-glide": "^1.2",
+        "moonlandsoft/yii2-phpexcel": "*",
+        "phpoffice/phpexcel": "^1.8"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

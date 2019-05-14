@@ -62,5 +62,9 @@ use yii\bootstrap\Nav;
                 ]
             ],
         ],
+        [
+            'label' => 'นำเข้าข้อมูล',
+            'url' => ['/user/admin/import-user'],
+        ],
     ],
 ]) ?>

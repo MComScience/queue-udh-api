@@ -56,4 +56,13 @@ class FileStorageItem extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
         ];
     }
+
+    /**
+     * {@inheritdoc}
+     * @return FileStorageItemQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new FileStorageItemQuery(get_called_class());
+    }
 }

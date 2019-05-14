@@ -13,11 +13,14 @@ class User extends BaseUser
 	const ROLE_USER = 10;
     const ROLE_ADMIN = 20;
 
+    public $excelFile;
+
     public function rules()
     {
 		$rules = parent::rules();
 		$rules['avatar'] = [['avatar'], 'safe'];
 		$rules['role'] = [['role'], 'safe'];
+        $rules['excelFile'] = [['excelFile'], 'file', 'skipOnEmpty' => true, 'extensions' => 'xls, xlsx'];
         return $rules;
 	}
 	
@@ -181,6 +184,16 @@ class User extends BaseUser
             return 'Admin';
         }else{
             return 'User';
+        }
+    }
+
+    public function upload()
+    {
+        if ($this->validate()) {
+            $this->excelFile->saveAs('uploads/' . $this->excelFile->baseName . '.' . $this->excelFile->extension);
+            return true;
+        } else {
+            return false;
         }
     }
 }

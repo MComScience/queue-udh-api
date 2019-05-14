@@ -56,6 +56,7 @@ class SiteController extends Controller
                 'class' => 'yii\captcha\CaptchaAction',
                 'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
             ],
+            'glide' => 'trntv\glide\actions\GlideAction'
         ];
     }
 
@@ -199,8 +200,13 @@ class SiteController extends Controller
 
     public function actionPrint($id)
     {
+        $logger = Yii::$app->logger->getLogger();
         $model = $this->findModelQueue($id);
         $modelPatient = $this->findModelPatient($model['patient_id']);
+        // save log
+        $logger->info('Printing', [
+            'patient' => $modelPatient
+        ]);
         return $this->renderAjax('print', [
             'model' => $model,
             'department' => $model->dept,

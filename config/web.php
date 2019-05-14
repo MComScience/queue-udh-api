@@ -160,6 +160,12 @@ $config = [
         'notify' => [
             'class' => 'app\components\LineNotify'
         ],
+        'glide' => [
+            'class' => 'trntv\glide\components\Glide',
+            'sourcePath' => '@app/web/uploads',
+            'cachePath' => '@runtime/glide',
+            'signKey' => false // "false" if you do not want to use HTTP signatures
+        ],
     ],
     'modules' => [
         'v1' => [
@@ -180,6 +186,9 @@ $config = [
                 'Profile' => 'app\modules\v1\models\Profile',
                 'RegistrationForm' => 'app\modules\v1\models\RegistrationForm',
                 'LoginForm' => 'app\modules\v1\models\LoginForm',
+            ],
+            'controllerMap' => [
+                'admin' => 'app\modules\user\controllers\AdminController'
             ],
         ],
         'gridview' => [

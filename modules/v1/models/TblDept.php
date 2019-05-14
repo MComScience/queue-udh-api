@@ -103,4 +103,13 @@ class TblDept extends \yii\db\ActiveRecord
             self::STATUS_DEACTIVE => 'ปิดใช้งาน'
         ];
     }
+
+    /**
+     * {@inheritdoc}
+     * @return TblDeptQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new TblDeptQuery(get_called_class());
+    }
 }

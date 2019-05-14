@@ -73,7 +73,7 @@ class TblPatient extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['hn', 'cid', 'firstname', 'lastname'], 'required'],
+            [['hn', 'firstname', 'lastname'], 'required'],
             [['birth_date'], 'safe'],
             [['age'], 'integer'],
             [['appoint'], 'string'],

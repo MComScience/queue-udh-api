@@ -2,10 +2,6 @@
 
 namespace app\modules\v1\controllers;
 
-use app\modules\v1\models\FileStorageItem;
-use app\modules\v1\models\TblDept;
-use app\modules\v1\models\TblPatient;
-use app\modules\v1\models\TblPriority;
 use Yii;
 use yii\db\Expression;
 use yii\helpers\ArrayHelper;
@@ -26,6 +22,11 @@ use yii\web\NotFoundHttpException;
 use app\modules\v1\models\TblKiosk;
 use app\modules\v1\traits\ModelTrait;
 use app\modules\v1\models\TblDeptGroup;
+use app\modules\v1\models\FileStorageItem;
+use app\modules\v1\models\TblDept;
+use app\modules\v1\models\TblPatient;
+use app\modules\v1\models\TblPriority;
+use app\helpers\Enum;
 
 class QueueController extends ActiveController
 {
@@ -123,14 +124,10 @@ class QueueController extends ActiveController
         $logger = Yii::$app->logger->getLogger();
         $params = \Yii::$app->getRequest()->getBodyParams();
         $imgUrl = '';
-        $modelDept = TblDept::findOne(['dept_id' => $params['department']['dept_code']]);
-        if (!$modelDept) {
-            $logger->error('Register Queue', ['msg' => 'ไม่พบข้อมูลแผนกในระบบคิว', 'dept_code' => $params['department']['dept_code']]);
-            Yii::$app->notify->sendMessage('ไม่พบข้อมูลแผนกในระบบคิว! '."\n". Json::encode($params));
-            throw new HttpException(422, 'ไม่พบข้อมูลแผนกในระบบคิว');
-        }
-        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
-        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        $modelDept = TblDept::find()->findByDeptCode($params['department']['dept_code']); // ค้นหาแผนก
+        $this->checkDept($modelDept, $params, $logger); // ตรวจสอบข้อมูลแผนก
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
         $rows = (new \yii\db\Query())
             ->select(['tbl_queue.*'])
             ->from('tbl_queue')
@@ -140,55 +137,58 @@ class QueueController extends ActiveController
             ])
             ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
-            ->one();
-        $modelDeptGroup = $this->findModelDeptGroup($modelDept['dept_group_id']);
+            ->one(); // ค้นหาคิวที่เคยลงทะเบียน
+        $modelDeptGroup = $this->findModelDeptGroup($modelDept['dept_group_id']); // กลุ่มแผนก
         // ถ้าลงทะเบียนแผนกเดิม
         if ($rows && $rows !== null) {
-            $modelPatient = $this->findModelPatient($rows['patient_id']);
+            $modelPatient = $this->findModelPatient($rows['patient_id']); // ข้อมูลผู้ป่วย
             $modelPatient->setAttributes($params['user']);
-            $modelPatient->appoint = empty($params['user']['appoint']) ? '' : Json::encode($params['user']['appoint']);
+            $modelPatient->appoint = empty($params['user']['appoint']) ? '' : Json::encode($params['user']['appoint']); // นัดหมาย
             $modelPatient->save();
 
-            $modelStorage = FileStorageItem::findOne(['ref_id' => $rows['patient_id']]);
-            if($modelStorage) {
-                $imgUrl = Url::base(true) . $modelStorage['base_url'] . $modelStorage['path'];
+            $modelStorage = FileStorageItem::find()->findByRefId($rows['patient_id']); // ค้นหารูปภาพ
+            if ($modelStorage) { // ถ้าเจอรูปภาพ
+                $imgUrl = $this->imgUrl($modelStorage['path']); // ลิ้งค์รูปภาพ
             }
             return [
-                'queue' => $rows,
-                'patient' => $modelPatient,
-                'dept' => $modelDept,
-                'dept_group' => $modelDeptGroup,
-                'imgUrl' => $imgUrl
+                'queue' => $rows, // ข้อมูลคิว
+                'patient' => $modelPatient, // ข้อมูลผู้ป่วย
+                'dept' => $modelDept, // ข้อมูลแผนก
+                'dept_group' => $modelDeptGroup, // ข้อมูลกลุ่มแผนก
+                'imgUrl' => $imgUrl // ลิ้งค์ภาพโปรไฟล์
             ];
         }
-        //$priority = $params['queue_type'] === 1 ? 1 : $params['priority'];
         $transaction = TblPatient::getDb()->beginTransaction();
         try {
+            // ข้อมูลผู้ป่วย
             $modelPatient = new TblPatient();
             $modelPatient->setAttributes($params['user']);
             $modelPatient->appoint = empty($params['user']['appoint']) ? '' : Json::encode($params['user']['appoint']);
             if ($modelPatient->save()) {
+                // ข้อมูลคิว
                 $modelQueue = new TblQueue();
-                $modelQueue->patient_id = $modelPatient['patient_id'];
-                $modelQueue->dept_group_id = $modelDeptGroup['dept_group_id'];
-                $modelQueue->dept_id = $modelDept['dept_id'];
-                $modelQueue->priority_id = $params['priority'];
-                $modelQueue->queue_type = $params['queue_type'];
-                $modelQueue->queue_status_id = 1; // default รอเรียก
+                $modelQueue->setAttributes([
+                    'patient_id' => $modelPatient['patient_id'], // ไอดีผู้ป่วย
+                    'dept_group_id' => $modelDeptGroup['dept_group_id'], // กลุ่มแผนก
+                    'dept_id' => $modelDept['dept_id'], // แผนก
+                    'priority_id' => $params['priority'], // ประเภทคิว
+                    'queue_type' => $params['queue_type'], //
+                    'queue_status_id' => TblQueue::STATUS_WAIT, // default รอเรียก
+                ]);
 
                 if ($modelQueue->save()) {
-                    if (!empty($params['user']['photo'])) {
+                    if (!empty($params['user']['photo'])) { // save photo from base64
                         $imgUrl = $this->savePhoto($params['user']['photo'], $modelPatient['patient_id']);
                     }
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();
                     $response->setStatusCode(201);
                     return [
-                        'queue' => $modelQueue,
-                        'patient' => $modelPatient,
-                        'dept' => $modelDept,
-                        'dept_group' => $modelDeptGroup,
-                        'imgUrl' => $imgUrl
+                        'queue' => $rows, // ข้อมูลคิว
+                        'patient' => $modelPatient, // ข้อมูลผู้ป่วย
+                        'dept' => $modelDept, // ข้อมูลแผนก
+                        'dept_group' => $modelDeptGroup, // ข้อมูลกลุ่มแผนก
+                        'imgUrl' => $imgUrl // ลิ้งค์ภาพโปรไฟล์
                     ];
                 } else {
                     $transaction->rollBack();
@@ -196,8 +196,8 @@ class QueueController extends ActiveController
                         'msg' => $modelQueue->errors,
                         'data' => $params
                     ];
-                    $logger->error('Register Queue', $logdata);
-                    Yii::$app->notify->sendMessage('ลงทะเบียนคิวไม่สำเร็จ! '."\n". Json::encode($logdata));
+                    $logger->error('Register Queue', $logdata); // save to log file
+                    Yii::$app->notify->sendMessage('ลงทะเบียนคิวไม่สำเร็จ! ' . "\n" . Json::encode($params['user'])); // send to line notify
                     TblPatient::findOne($modelPatient['patient_id'])->delete();
                     throw new HttpException(422, Json::encode($modelQueue->errors));
                 }
@@ -207,19 +207,34 @@ class QueueController extends ActiveController
                     'msg' => $modelPatient->errors,
                     'data' => $params
                 ];
-                $logger->error('Register Queue', $logdata);
-                Yii::$app->notify->sendMessage('ลงทะเบียนคิวไม่สำเร็จ! '."\n". Json::encode($logdata));
+                $logger->error('Register Queue', $logdata); // save to log file
+                Yii::$app->notify->sendMessage('ลงทะเบียนคิวไม่สำเร็จ! ' . "\n" . Json::encode($params['user'])); // send to line notify
                 throw new HttpException(422, Json::encode($modelPatient->errors));
             }
         } catch (\Exception $e) {
             $transaction->rollBack();
-            $logger->error('Register Queue', $e);
+            $logger->error('Register Queue', ['msg' => $e]);
             throw $e;
         } catch (\Throwable $e) {
             $transaction->rollBack();
-            $logger->error('Register Queue', $e);
+            $logger->error('Register Queue', ['msg' => $e]);
             throw $e;
         }
+    }
+
+    // ตรวจสอบข้อมูลแผนก
+    private function checkDept($model, $params, $logger)
+    {
+        if (!$model) { // ถ้าไม่พบข้อมูลแผนก
+            $logger->error('Register Queue', ['msg' => 'ไม่พบข้อมูลแผนกในระบบคิว', 'dept_code' => $params['department']['dept_code']]); // save to log file
+            Yii::$app->notify->sendMessage('ไม่พบข้อมูลแผนกในระบบคิว! ' . "\n" . Json::encode($params)); // send to line notify
+            throw new HttpException(422, 'ไม่พบข้อมูลแผนกในระบบคิว');
+        }
+    }
+
+    private function imgUrl($path)
+    {
+        return Url::base(true) . Url::to(['/site/glide', 'path' => $path, 'w' => 110, 'h' => 130]);
     }
 
     private function savePhoto($photo, $patient_id)
@@ -244,8 +259,8 @@ class QueueController extends ActiveController
             $modelStorage->name = $security;
             $modelStorage->ref_id = $patient_id;
             $modelStorage->created_at = Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s');
-            if($modelStorage->save()){
-                return Url::base(true) . $modelStorage['base_url'] . $modelStorage['path'];
+            if ($modelStorage->save()) {
+                return $this->imgUrl($modelStorage['path']);
             }
         } else {
             return '';
@@ -260,7 +275,7 @@ class QueueController extends ActiveController
         return [
             'queue' => $model, // ข้อมูลคิว
             'department' => $model->dept, // ข้อมูลแผนก
-            'patient' => $modelPatient
+            'patient' => $modelPatient // ข้อมูลผู้ป่วย
         ];
     }
 
@@ -321,10 +336,11 @@ class QueueController extends ActiveController
         return ArrayHelper::map(TblPriority::find()->all(), 'priority_id', 'priority_name');
     }
 
+    // เช็คคิวที่ลงทะเบียน
     public function actionPatientRegister($q)
     {
-        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
-        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
         // hn
         if (strlen($q) < 13) {
             $patient = TblPatient::find()
@@ -341,7 +357,7 @@ class QueueController extends ActiveController
         }
         if (!$patient) {
             return [
-                'message' => 'ไม่พบข้อมูลผู้ป่วย'
+                'message' => 'ไม่พบข้อมูลคิว'
             ];
         }
         $queues = (new \yii\db\Query())
@@ -363,6 +379,7 @@ class QueueController extends ActiveController
         }
     }
 
+    // ข้อมูลแดชบอร์ด
     public function actionDashboard($q = '')
     {
         $itemDepts = [];
@@ -370,10 +387,8 @@ class QueueController extends ActiveController
         $seriesColumn = [];
         $seriesDrilldown = [];
         $deptGroups = TblDeptGroup::find()->all();
-        // วันที่เริ่ม
-        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
-        // วันที่สิ้นสุด
-        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
         // ถ้ามีการค้นหาจากวันที่
         if (!empty($q)) {
             // วันที่เริ่ม
@@ -381,7 +396,7 @@ class QueueController extends ActiveController
             // วันที่สิ้นสุด
             $endDate = $q . ' 23:59:59';
         }
-        $countAll = TblQueue::find()->andWhere(['between', 'created_at', $startDate, $endDate])->count();
+        $countAll = TblQueue::find()->andWhere(['between', 'created_at', $startDate, $endDate])->count(); // จำนวนทั้งหมด
         $itemDepts[] = [
             'dept_group_name' => 'ทั้งหมด',
             'items' => [
@@ -443,10 +458,8 @@ class QueueController extends ActiveController
 
     public function actionListAll($q = '')
     {
-        // วันที่เริ่ม
-        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
-        // วันที่สิ้นสุด
-        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
         // ถ้ามีการค้นหาจากวันที่
         if (!empty($q)) {
             // วันที่เริ่ม
@@ -475,7 +488,7 @@ class QueueController extends ActiveController
         $response = [];
         foreach ($rows as $row) {
             $response[] = ArrayHelper::merge($row, [
-                'base_url' => !empty($row['base_url']) ? Url::base(true) . $row['base_url'] . $row['path'] : ''
+                'base_url' => !empty($row['base_url']) ? $this->imgUrl($row['path']) : ''
             ]);
         }
         return $response;

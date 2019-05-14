@@ -32,6 +32,8 @@ class TblQueue extends \yii\db\ActiveRecord
 {
     use ModelTrait;
 
+    const STATUS_WAIT = 1;
+
     /**
      * {@inheritdoc}
      */
@@ -184,5 +186,14 @@ class TblQueue extends \yii\db\ActiveRecord
             'digit' => $department ? (int)$department['dept_num_digit'] : 3,
         ]);
         return $component->generate();
+    }
+
+    /**
+     * {@inheritdoc}
+     * @return TblQueueQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new TblQueueQuery(get_called_class());
     }
 }
