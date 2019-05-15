@@ -205,7 +205,8 @@ class SiteController extends Controller
         $modelPatient = $this->findModelPatient($model['patient_id']);
         // save log
         $logger->info('Printing', [
-            'patient' => $modelPatient
+            'patient' => Json::encode($modelPatient),
+            'queue' => Json::encode($model)
         ]);
         return $this->renderAjax('print', [
             'model' => $model,
