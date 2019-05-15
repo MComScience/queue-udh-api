@@ -172,7 +172,8 @@ class QueueController extends ActiveController
                     'dept_group_id' => $modelDeptGroup['dept_group_id'], // กลุ่มแผนก
                     'dept_id' => $modelDept['dept_id'], // แผนก
                     'priority_id' => $params['priority'], // ประเภทคิว
-                    'queue_type' => $params['queue_type'], //
+                    'queue_type' => $params['queue_type'], // ออกคิวจากตู้หรือ one stop
+                    // 'patient_type' => $params['patient_type'], // มาโดย
                     'queue_status_id' => TblQueue::STATUS_WAIT, // default รอเรียก
                 ]);
 
@@ -227,7 +228,11 @@ class QueueController extends ActiveController
     {
         if (!$model) { // ถ้าไม่พบข้อมูลแผนก
             $logger->error('Register Queue', ['msg' => 'ไม่พบข้อมูลแผนกในระบบคิว', 'dept_code' => $params['department']['dept_code']]); // save to log file
-            Yii::$app->notify->sendMessage('ไม่พบข้อมูลแผนกในระบบคิว! ' . "\n" . Json::encode($params)); // send to line notify
+            Yii::$app->notify->sendMessage('ไม่พบข้อมูลแผนกในระบบคิว! ' . "\n" . Json::encode([
+                'hn' => $params['user']['hn'], 
+                'fullname' => $params['user']['fullname'], 
+                'dept' => $params['department']
+            ])); // send to line notify
             throw new HttpException(422, 'ไม่พบข้อมูลแผนกในระบบคิว');
         }
     }

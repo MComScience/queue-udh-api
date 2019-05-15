@@ -21,6 +21,7 @@ use Intervention\Image\ImageManagerStatic;
 use yii\helpers\FileHelper;
 use yii\helpers\ArrayHelper;
 use yii\widgets\ActiveForm;
+use yii\data\ActiveDataProvider;
 
 class UserController extends ActiveController
 {
@@ -100,6 +101,16 @@ class UserController extends ActiveController
             ],
         ];
         return $behaviors;
+    }
+
+    public function actionIndex()
+    {
+        return new ActiveDataProvider([
+            'query' => User::find(),
+            'pagination' => [
+                'pageSize' => false,
+            ],
+        ]);
     }
 
     public function actionProfile()
