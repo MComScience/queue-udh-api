@@ -74,6 +74,40 @@ class ManagerController extends Controller
                         ],
                     ],
                 ],
+            ],
+            'connector2' => [
+                'class' => ConnectorAction::class,
+                'options' => [
+                    'disabledCommands' => ['netmount'],
+                    'connectOptions' => [
+                        'filter'
+                    ],
+                    'roots' => [
+                        [
+                            'driver' => 'LocalFileSystem',
+                            'path' => Yii::getAlias('@runtime') . DIRECTORY_SEPARATOR,
+                            //'URL' => Yii::getAlias('@runtime'),
+                            'uploadDeny' => [
+                                'text/x-php', 'text/php', 'application/x-php', 'application/php'
+                            ],
+                            'accessControl' => 'access',
+                            'attributes' => [
+                                [
+                                    'pattern' => '!^/assets!',
+                                    'hidden' => true
+                                ],
+                                [
+                                    'pattern' => '!^/index.php!',
+                                    'hidden' => true
+                                ],
+                                [
+                                    'pattern' => '!^/index-test.php!',
+                                    'hidden' => true
+                                ]
+                            ],
+                        ],
+                    ],
+                ],
             ]
         ];
     }
@@ -84,5 +118,10 @@ class ManagerController extends Controller
     public function actionIndex()
     {
         return $this->render('index');
+    }
+
+    public function actionRuntime()
+    {
+        return $this->render('runtime');
     }
 }

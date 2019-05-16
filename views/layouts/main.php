@@ -42,6 +42,7 @@ AppAsset::register($this);
             ['label' => 'หน้าหลัก', 'url' => ['/site/index']],
             ['label' => 'ผู้ใช้งาน', 'url' => ['/user/admin/index'], 'visible' => !Yii::$app->user->isGuest],
             ['label' => 'จัดการไฟล์', 'url' => ['/file/manager/index'], 'visible' => !Yii::$app->user->isGuest],
+            ['label' => 'Runtime', 'url' => ['/file/manager/runtime'], 'visible' => !Yii::$app->user->isGuest],
             [
                 'label' => 'ตั้งค่า',
                 'items' => [
