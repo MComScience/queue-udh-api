@@ -85,6 +85,9 @@ class DeptGroupController extends Controller
         $model = new TblDeptGroup();  
 
         if($request->isAjax){
+            if($request->post()){
+                $model->dept_group_order = TblDeptGroup::find()->max('dept_group_order') + 1;
+            }
             /*
             *   Process for ajax request
             */
@@ -267,5 +270,33 @@ class DeptGroupController extends Controller
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
+    }
+
+    public function actionOrder()
+    {
+        $items = [];
+        $model = new TblDeptGroup();
+        if($model->load(Yii::$app->request->post())){
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $data = Yii::$app->request->post('TblDeptGroup');
+            $orders = explode(",",$data['order_group']);
+            foreach($orders as $index => $value) {
+                $modelDeptGroup = TblDeptGroup::findOne($value);
+                $modelDeptGroup->dept_group_order = $index+1;
+                $modelDeptGroup->save();
+            }
+            Yii::$app->session->setFlash('success', "Successfully.");
+            return TblDeptGroup::find()->orderBy('dept_group_order asc')->all();
+        }
+        $models = TblDeptGroup::find()->orderBy('dept_group_order asc')->all();
+        foreach ($models as $key => $value) {
+            $items[$value['dept_group_id']] = [
+                'content' => $value['dept_group_name']
+            ];
+        }
+        return $this->render('order',[
+            'model' => $model,
+            'items' => $items
+        ]);
     }
 }

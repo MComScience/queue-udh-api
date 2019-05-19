@@ -37,8 +37,8 @@ class TblCounter extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'counter_id' => 'รหัสเคาท์เตอร์',
-            'counter_name' => 'ชื่อเคาท์เตอร์',
+            'counter_id' => 'รหัสเคาน์เตอร์',
+            'counter_name' => 'ชื่อเคาน์เตอร์',
         ];
     }
 

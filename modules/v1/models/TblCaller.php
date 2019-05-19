@@ -25,6 +25,8 @@ use yii\helpers\ArrayHelper;
  */
 class TblCaller extends \yii\db\ActiveRecord
 {
+    const STATUS_CALL = 0; // กำลังเรียก
+    const STATUS_CALL_END = 1; // เรียกเสร็จ
     /**
      * {@inheritdoc}
      */
@@ -40,7 +42,7 @@ class TblCaller extends \yii\db\ActiveRecord
                 'class' => TimestampBehavior::className(),
                 'createdAtAttribute' => 'created_at',
                 'updatedAtAttribute' => 'updated_at',
-                'value' => new Expression('NOW()'),
+                'value' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'),
             ],
             [
                 'class' => BlameableBehavior::className(),
@@ -56,7 +58,7 @@ class TblCaller extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['queue_id', 'counter_id', 'counter_service_id', 'created_at', 'updated_at', 'created_by', 'updated_by', 'caller_status'], 'required'],
+            [['queue_id', 'counter_id', 'counter_service_id'], 'required'],
             [['queue_id', 'counter_id', 'counter_service_id', 'created_by', 'updated_by', 'caller_status'], 'integer'],
             [['call_time', 'hold_time', 'end_time', 'created_at', 'updated_at'], 'safe'],
         ];

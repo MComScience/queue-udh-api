@@ -85,11 +85,15 @@ class DeptController extends Controller
         $model = new TblDept();  
 
         if($request->isAjax){
+            if($request->post()){
+                $model->dept_order = TblDept::find()->max('dept_order') + 1;
+            }
             /*
             *   Process for ajax request
             */
             Yii::$app->response->format = Response::FORMAT_JSON;
             if($request->isGet){
+                $model->prefix_running = 0;
                 return [
                     'title'=> "บันทึกแผนก",
                     'content'=>$this->renderAjax('create', [
@@ -267,5 +271,37 @@ class DeptController extends Controller
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
+    }
+
+    public function actionOrder()
+    {
+        $items = [];
+        $model = new TblDept();
+        if($model->load(Yii::$app->request->post())){
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $data = Yii::$app->request->post('TblDept');
+            $orders = explode(",",$data['order_dept']);
+            foreach($orders as $index => $value) {
+                $modelDeptGroup = TblDept::findOne($value);
+                $modelDeptGroup->dept_order = $index+1;
+                $modelDeptGroup->save();
+            }
+            return 'Successfully';
+        }
+        $models = (new \yii\db\Query())
+            ->select(['tbl_dept.*', 'tbl_dept_group.*'])
+            ->from('tbl_dept')
+            ->innerJoin('tbl_dept_group', 'tbl_dept_group.dept_group_id = tbl_dept.dept_group_id')
+            ->orderBy('tbl_dept_group.dept_group_order ASC, tbl_dept.dept_order ASC')
+            ->all();
+        foreach ($models as $key => $value) {
+            $items[$value['dept_id']] = [
+                'content' => '('.$value['dept_group_name'].') '.$value['dept_order'].'.'.$value['dept_name']
+            ];
+        }
+        return $this->render('order',[
+            'model' => $model,
+            'items' => $items
+        ]);
     }
 }

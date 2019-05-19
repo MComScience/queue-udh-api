@@ -50,7 +50,7 @@ class TblCounterService extends \yii\db\ActiveRecord
             'counter_service_no' => 'หมายเลขช่อง',
             'counter_service_sound' => 'เสียงเรียกบริการ',
             'counter_service_no_sound' => 'เสียงเรียกหมายเลข',
-            'counter_id' => 'เคาท์เตอร์',
+            'counter_id' => 'เคาน์เตอร์',
             'counter_service_status' => 'สถานะ',
         ];
     }
@@ -64,13 +64,13 @@ class TblCounterService extends \yii\db\ActiveRecord
     // เสียงเรียกบริการ
     public function getServiceSound()
     {
-        return $this->hasOne(TblSound::className(), ['counter_service_sound' => 'sound_id']);
+        return $this->hasOne(TblSound::className(), ['sound_id' => 'counter_service_sound']);
     }
 
     // เสียงเรียกหมายเลข
     public function getServiceNoSound()
     {
-        return $this->hasOne(TblSound::className(), ['counter_service_no_sound' => 'sound_id']);
+        return $this->hasOne(TblSound::className(), ['sound_id' => 'counter_service_no_sound']);
     }
 
     // สถานะการใช้งาน

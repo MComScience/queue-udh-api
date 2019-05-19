@@ -16,6 +16,7 @@ use app\modules\v1\models\TblQueue;
 use app\modules\v1\models\TblQueueStatus;
 use app\modules\v1\models\TblSound;
 use app\modules\v1\models\TblSoundStation;
+use app\modules\v1\models\TblPrefix;
 
 trait ModelTrait
 {
@@ -146,6 +147,15 @@ trait ModelTrait
             return $model;
         } else {
             $this->handleError(TblSoundStation::className());
+        }
+    }
+
+    protected function findModelPrefix($id)
+    {
+        if (($model = TblPrefix::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(TblPrefix::className());
         }
     }
 

@@ -41,7 +41,7 @@ CrudAsset::register($this);
             'panel' => [
                 'type' => 'primary',
                 'heading' => '<i class="glyphicon glyphicon-list"></i> กลุ่มแผนก',
-                'before' => '<em>* Resize table columns just like a spreadsheet by dragging the column edges.</em>',
+                'before' => Html::a('<i class="glyphicon glyphicon-sort-by-attributes"></i> จัดเรียงลำดับ', ['/settings/dept-group/order'],['class' => 'btn btn-default', 'data-pjax' => 0]),
                 'after' => BulkButtonWidget::widget([
                         'buttons' => Html::a('<i class="glyphicon glyphicon-trash"></i>&nbsp; Delete All',
                             ["bulk-delete"],
@@ -62,5 +62,6 @@ CrudAsset::register($this);
 <?php Modal::begin([
     "id" => "ajaxCrudModal",
     "footer" => "",// always need it for jquery plugin
+    'options' => ['tabindex' => false]
 ]) ?>
 <?php Modal::end(); ?>

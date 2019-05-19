@@ -41,11 +41,21 @@ class TblDeptSearch extends TblDept
      */
     public function search($params)
     {
-        $query = TblDept::find();
+        $query = TblDept::find()
+            ->innerJoin('tbl_dept_group', 'tbl_dept_group.dept_group_id = tbl_dept.dept_group_id')
+            ->orderBy('tbl_dept_group.dept_group_order ASC, tbl_dept.dept_order ASC');
+
+        //$query->joinWith(['deptGroup']);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
+
+        /* $dataProvider->sort->attributes['deptGroup'] = [
+            // The tables are the ones our relation are configured to
+            // in my case they are prefixed with "tbl_"
+            'asc' => ['tbl_dept_group.dept_group_order' => SORT_ASC],
+        ]; */
 
         $this->load($params);
 

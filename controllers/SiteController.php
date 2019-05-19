@@ -203,6 +203,25 @@ class SiteController extends Controller
         $logger = Yii::$app->logger->getLogger();
         $model = $this->findModelQueue($id);
         $modelPatient = $this->findModelPatient($model['patient_id']);
+        $department = $this->findModelDept($model['dept_id']);
+        $modelCard = $this->findModelCard($department['card_id']);
+        $card_template = strtr($modelCard['card_template'],[
+            '{hn}' => $modelPatient['hn'],
+            '{number}' => $model['queue_no'], // เลขคิว
+            '{dept_name}' => $department['dept_name'], // แผนก
+            '{message_right}' => $modelPatient['maininscl_name'], // ชื่อสิทธิ
+            '{fullname}' => $modelPatient['fullname'], // ชื่อผู้ป่วย
+            '{date}' => Yii::$app->formatter->asDate('now', 'php: d M ') . (Yii::$app->formatter->asDate('now', 'php:Y') + 543),
+            '{time}' => Yii::$app->formatter->asDate('now', 'php: H:i น.')
+        ]);
+        $i = !empty($department['print_copy_qty']) ? $department['print_copy_qty'] : 1; // จำนวน copy
+        $template = '';
+        for($x = 0; $x < $i; $x++) {
+            $template .= strtr($card_template,[
+                '{qrcode}' => '<div id="qrcode'.$x.'" class="qrcode" style="text-align: right;padding-right: 20px;"></div>',
+                '{barcode}' => '<img id="barcode'.$x.'"/>',
+            ]);
+        }
         // save log
         $logger->info('Printing', [
             'patient' => Json::encode($modelPatient),
@@ -210,8 +229,10 @@ class SiteController extends Controller
         ]);
         return $this->renderAjax('print', [
             'model' => $model,
-            'department' => $model->dept,
-            'patient' => $modelPatient
+            'department' => $department,
+            'patient' => $modelPatient,
+            'template' => $template,
+            'i' => $i
         ]);
     }
 

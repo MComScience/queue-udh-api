@@ -12,6 +12,7 @@ use Yii;
  */
 class TblDeptGroup extends \yii\db\ActiveRecord
 {
+    public $order_group;
     /**
      * {@inheritdoc}
      */
@@ -27,6 +28,8 @@ class TblDeptGroup extends \yii\db\ActiveRecord
     {
         return [
             [['dept_group_name'], 'required'],
+            [['dept_group_order'], 'integer'],
+            [['order_group'], 'safe'],
             [['dept_group_name'], 'string', 'max' => 255],
         ];
     }
@@ -39,6 +42,7 @@ class TblDeptGroup extends \yii\db\ActiveRecord
         return [
             'dept_group_id' => 'รหัสกลุ่ม/แผนก',
             'dept_group_name' => 'ชื่อกลุ่ม/แผนก',
+            'dept_group_order' => 'ลำดับการแสดงผล',
         ];
     }
 

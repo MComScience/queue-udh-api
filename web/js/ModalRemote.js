@@ -212,9 +212,9 @@ function ModalRemote(modalId) {
      * @param {string} response
      */
     function successRemoteResponse(response) {
-
         // Reload datatable if response contain forceReload field
         if (response.forceReload !== undefined && response.forceReload) {
+            toastr.success('บันทึกรายการสำเร็จ!.', 'Success', {timeOut: 5000});
             if (response.forceReload == 'true') {
                 // Backwards compatible reload of fixed crud-datatable-pjax
                 $.pjax.reload({container: '#crud-datatable-pjax'});

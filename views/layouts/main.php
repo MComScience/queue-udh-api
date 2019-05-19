@@ -46,11 +46,17 @@ AppAsset::register($this);
             [
                 'label' => 'ตั้งค่า',
                 'items' => [
+                    ['label' => 'ตัวอักษรหน้าเลขคิว', 'url' => '/settings/prefix/index'],
                     ['label' => 'กลุ่มแผนก', 'url' => '/settings/dept-group/index'],
                     // '<li class="divider"></li>',
                     // '<li class="dropdown-header">Dropdown Header</li>',
                     ['label' => 'แผนก', 'url' => '/settings/dept/index'],
                     ['label' => 'ตู้กดบัตรคิว', 'url' => '/settings/kiosk/index'],
+                    ['label' => 'บัตรคิว', 'url' => '/settings/card/index'],
+                    ['label' => 'โปรไฟล์เซอร์วิส', 'url' => '/settings/profile-service/index'],
+                    //['label' => 'เคาน์เตอร์', 'url' => '/settings/counter/index'],
+                    ['label' => 'จุดบริการ/ช่องบริการ', 'url' => '/settings/counter-service/index'],
+                    ['label' => 'AutoNumber', 'url' => '/settings/auto-number/index'],
                 ],
                 'visible' => !Yii::$app->user->isGuest
             ],

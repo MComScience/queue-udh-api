@@ -14,35 +14,68 @@ return [
     [
         'class' => '\kartik\grid\DataColumn',
         'attribute' => 'dept_id',
+        'hAlign' => 'center'
     ],
     [
         'class' => '\kartik\grid\DataColumn',
         'attribute' => 'dept_group_id',
+        'group' => true,  // enable grouping,
+        'groupedRow' => true,  
         'value' => function ($model) {
-            return $model->deptGroup->dept_group_name;
+            return $model->deptGroup ? $model->deptGroup->dept_group_name : '';
         },
-        'group' => true
     ],
     [
         'class' => '\kartik\grid\DataColumn',
         'attribute' => 'dept_name',
     ],
-    [
+    /* [
         'class' => '\kartik\grid\DataColumn',
         'attribute' => 'dept_prefix',
-    ],
+    ], */
     [
         'class' => '\kartik\grid\DataColumn',
         'attribute' => 'dept_num_digit',
+        'hAlign' => 'center'
     ],
-    // [
-    // 'class'=>'\kartik\grid\DataColumn',
-    // 'attribute'=>'card_id',
-    // ],
-    // [
-    // 'class'=>'\kartik\grid\DataColumn',
-    // 'attribute'=>'dept_status',
-    // ],
+    [
+        'class'=>'\kartik\grid\DataColumn',
+        'attribute'=>'card_id',
+    ],
+    [
+        'class'=>'\kartik\grid\DataColumn',
+        'attribute'=>'prefix_id',
+        'value' => function ($model) {
+            return $model->prefix ? $model->prefix->prefix_code : '';
+        },
+        'hAlign' => 'center'
+    ],
+    [
+        'class'=>'\kartik\grid\DataColumn',
+        'attribute'=>'prefix_running',
+        'header' => 'is running',
+        'hAlign' => 'center'
+    ],
+    [
+        'class'=>'\kartik\grid\DataColumn',
+        'attribute'=>'print_copy_qty',
+        'hAlign' => 'center'
+    ],
+    [
+        'class'=>'\kartik\grid\DataColumn',
+        'attribute'=>'dept_order',
+        'label' => 'ลำดับ',
+        'hAlign' => 'center'
+    ],
+    [
+        'class'=>'\kartik\grid\DataColumn',
+        'attribute'=>'dept_status',
+        'value' => function ($model) {
+            return $model->statusName;
+        },
+        'hAlign' => 'center',
+        'noWrap' => true
+    ],
     [
         'class' => 'kartik\grid\ActionColumn',
         'dropdown' => false,

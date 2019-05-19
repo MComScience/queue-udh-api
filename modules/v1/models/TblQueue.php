@@ -9,8 +9,9 @@ use yii\db\Expression;
 use yii\helpers\ArrayHelper;
 use yii\db\ActiveRecord;
 use app\modules\v1\traits\ModelTrait;
-use app\modules\v1\components\AutoNumber;
+use app\modules\v1\components\AutoNumber as BaseAutoNumber;
 use app\modules\v1\behaviors\CoreMultiValueBehavior;
+use app\helpers\Enum;
 
 /**
  * This is the model class for table "tbl_queue".
@@ -20,8 +21,9 @@ use app\modules\v1\behaviors\CoreMultiValueBehavior;
  * @property int $patient_id ไอดีผู้ป่วย
  * @property int $dept_group_id กลุ่มแผนก
  * @property string $dept_id รหัสแผนก
- * @property int $priority_id ความสำคัญ
- * @property int $queue_type ประเภทคิว
+ * @property int $priority_id ประเภทคิว
+ * @property int $queue_station จุดออกบัตรคิว
+ * @property int $case_patient มาโดย
  * @property int $queue_status_id สถานะคิว
  * @property string $created_at วันที่บันทึก
  * @property string $updated_at วันที่แก้ไข
@@ -32,7 +34,10 @@ class TblQueue extends \yii\db\ActiveRecord
 {
     use ModelTrait;
 
-    const STATUS_WAIT = 1;
+    const STATUS_WAIT = 1; // รอเรียก
+    const STATUS_CALL = 2; // กำลังเรียก
+    const STATUS_HOLD = 3; // พักคิว
+    const STATUS_END = 4; // เสร็จสิ้น
 
     /**
      * {@inheritdoc}
@@ -78,8 +83,8 @@ class TblQueue extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['patient_id', 'dept_group_id', 'dept_id', 'priority_id', 'queue_type', 'queue_status_id'], 'required'],
-            [['patient_id', 'dept_group_id', 'priority_id', 'queue_type', 'queue_status_id', 'created_by', 'updated_by'], 'integer'],
+            [['patient_id', 'dept_group_id', 'dept_id', 'priority_id', 'queue_station', 'case_patient', 'queue_status_id'], 'required'],
+            [['patient_id', 'dept_group_id', 'priority_id', 'queue_station', 'case_patient', 'queue_status_id', 'created_by', 'updated_by'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
             [['queue_no', 'dept_id'], 'string', 'max' => 100],
         ];
@@ -96,8 +101,9 @@ class TblQueue extends \yii\db\ActiveRecord
             'patient_id' => 'ไอดีผู้ป่วย',
             'dept_group_id' => 'กลุ่มแผนก',
             'dept_id' => 'รหัสแผนก',
-            'priority_id' => 'ความสำคัญ',
-            'queue_type' => 'ประเภทคิว',
+            'priority_id' => 'ประเภทคิว',
+            'queue_station' => 'จุดออกบัตรคิว',
+            'case_patient' => 'มาโดย',
             'queue_status_id' => 'สถานะคิว',
             'created_at' => 'วันที่บันทึก',
             'updated_at' => 'วันที่แก้ไข',
@@ -155,8 +161,65 @@ class TblQueue extends \yii\db\ActiveRecord
     private function generateNumber()
     {
         $department = $this->findModelDept($this->dept_id); // แผนก
-        $startDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 00:00:00');
-        $endDate = Yii::$app->formatter->asDate('now', 'php:Y-m-d 23:59:59');
+        $modelPrefix = $this->findModelPrefix($department['prefix_id']); // ข้อมูลตัวอักหน้าเลขคิว
+        $isRunningContinue = $department->isRunningContinue;
+        if($isRunningContinue){ // ถ้ากำหนดให้เรียงเลขคิวต่อแผนกอื่นที่มีเลขนำหน้าคิวเดียวกัน
+            $modelAutoNumber = AutoNumber::findOne([
+                'prefix_id' => $department['prefix_id'],
+                'updated_at' => Yii::$app->formatter->asDate('now', 'php:Y-m-d'),
+                'flag' => 1
+            ]);
+        } else {
+            $modelAutoNumber = AutoNumber::findOne([
+                'prefix_id' => $department['prefix_id'],
+                'dept_code' => $department['dept_id'],
+                'updated_at' => Yii::$app->formatter->asDate('now', 'php:Y-m-d'),
+                'flag' => 0
+            ]);
+        }
+        $prefix = $this->priority_id == 1 ? $modelPrefix['prefix_code'] : 'A';
+        if(!$modelAutoNumber){ // no data
+            $component = \Yii::createObject([
+                'class' => BaseAutoNumber::className(),
+                'prefix' => $prefix,
+                'number' => 1,
+                'digit' => (int)$department['dept_num_digit'],
+            ]);
+            $number = $component->generate();
+
+            $autonumber = new AutoNumber();
+            if(!$isRunningContinue){
+                $autonumber->dept_code = $department['dept_id'];
+                $autonumber->flag = 0;
+            } else {
+                $autonumber->flag = 1;
+            }
+            $autonumber->number = $number;
+            $autonumber->prefix_id = $department['prefix_id'];
+            $autonumber->updated_at = Yii::$app->formatter->asDate('now', 'php:Y-m-d');
+            $autonumber->save();
+            return $number;
+        } else {
+            $component = \Yii::createObject([
+                'class' => BaseAutoNumber::className(),
+                'prefix' => $prefix,
+                'number' => $modelAutoNumber['number'],
+                'digit' => (int)$department['dept_num_digit'],
+            ]);
+            $number = $component->generate();
+
+            if(!$isRunningContinue){
+                $modelAutoNumber->dept_code = $department['dept_id'];
+                $modelAutoNumber->flag = 0;
+            } else {
+                $modelAutoNumber->flag = 1;
+            }
+            $modelAutoNumber->number = $number;
+            $modelAutoNumber->save();
+            return $number;
+        }
+        /* $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
         $maxId = $this->find()->where([
             'dept_id' => $this->dept_id,
             'dept_group_id' => $this->dept_group_id
@@ -167,7 +230,7 @@ class TblQueue extends \yii\db\ActiveRecord
         if ($maxId) {
             $modelQueue = $this->findOne($maxId);
             $no = $modelQueue['queue_no'];
-        }
+        } */
         /* $queue = ArrayHelper::map($this->find()->where([ 'dept_id' => $this->dept_id, 'dept_group_id' => $this->dept_group_id ])->all(),'queue_id','queue_no');
         $qnums = [];
         $maxqnum = null;
@@ -178,14 +241,14 @@ class TblQueue extends \yii\db\ActiveRecord
             }
             $maxqnum = max($qnums);
             $qid = array_search($maxqnum, $qnums);
-        }*/
+        }
         $component = \Yii::createObject([
-            'class' => AutoNumber::className(),
+            'class' => BaseAutoNumber::className(),
             'prefix' => ($department && $this->priority_id == 1) ? $department['dept_prefix'] : 'A',
             'number' => $no,
             'digit' => $department ? (int)$department['dept_num_digit'] : 3,
         ]);
-        return $component->generate();
+        return $component->generate();*/
     }
 
     /**
