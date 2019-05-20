@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use yii\grid\GridView;
+use kartik\grid\GridView;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\web\View;
@@ -28,20 +28,49 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <?= $this->render('/_alert', ['module' => Yii::$app->getModule('user')]) ?>
 
-<?= $this->render('/admin/_menu') ?>
+<?php // $this->render('/admin/_menu') ?>
 
 <?php Pjax::begin() ?>
 
 <?= GridView::widget([
     'dataProvider' => $dataProvider,
     'filterModel'  => $searchModel,
+    'pjax'=>true,
     'layout'       => "{items}\n{pager}",
+    'toolbar'=> [
+        ['content'=>
+            Html::a('<i class="glyphicon glyphicon-plus"></i>', ['create'],
+            ['title'=> 'Create new Tbl Cards','class'=>'btn btn-default', 'data-pjax' => 0]).
+            Html::a('<i class="glyphicon glyphicon-repeat"></i>', [''],
+            ['data-pjax'=>1, 'class'=>'btn btn-default', 'title'=>'Reset Grid']).
+            '{toggleData}'.
+            '{export}'
+        ],
+    ],          
+    'striped' => true,
+    'condensed' => true,
+    'responsive' => true,
+    'panel' => [
+        'type' => 'primary', 
+        'heading' => '<i class="glyphicon glyphicon-list"></i> ผู้ใช้งาน',
+        'before'=>Html::a('<i class="glyphicon glyphicon-import"></i> นำเข้าข้อมูล', ['import-user'],
+        ['title'=> 'นำเข้าข้อมูล','class'=>'btn btn-default', 'data-pjax' => 0]),
+        'after'=> '',
+    ],
+    'export' => [
+        'showConfirmAlert' => false
+    ],
     'columns' => [
         [
-            'attribute' => 'id',
-            'headerOptions' => ['style' => 'width:90px;'], # 90px is sufficient for 5-digit user ids
+            'class' => '\kartik\grid\SerialColumn'
         ],
         'username',
+        [
+            'header' => 'ชื่อ-นามสกุล',
+            'value' => function ($model) {
+                return $model->profile->name;
+            },
+        ],
         'email:email',
         [
             'attribute' => 'registration_ip',
@@ -51,6 +80,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     : $model->registration_ip;
             },
             'format' => 'html',
+            'hAlign' => 'center',
+            'hiddenFromExport' => true,
         ],
         [
             'attribute' => 'created_at',
@@ -61,6 +92,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     return date('Y-m-d G:i:s', $model->created_at);
                 }
             },
+            'hiddenFromExport' => true,
         ],
 
         [
@@ -74,6 +106,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 return date('Y-m-d G:i:s', $model->last_login_at);
             }
           },
+          'hiddenFromExport' => true,
         ],
         [
             'header' => Yii::t('user', 'Confirmation'),
@@ -92,6 +125,7 @@ $this->params['breadcrumbs'][] = $this->title;
             },
             'format' => 'raw',
             'visible' => Yii::$app->getModule('user')->enableConfirmation,
+            'hiddenFromExport' => true,
         ],
         [
             'header' => Yii::t('user', 'Block status'),
@@ -111,9 +145,11 @@ $this->params['breadcrumbs'][] = $this->title;
                 }
             },
             'format' => 'raw',
+            'hiddenFromExport' => true,
         ],
         [
-            'class' => 'yii\grid\ActionColumn',
+            'class' => '\kartik\grid\ActionColumn',
+            'noWrap' => true,
             'template' => '{switch} {resend_password} {update} {delete}',
             'buttons' => [
                 'resend_password' => function ($url, $model, $key) {

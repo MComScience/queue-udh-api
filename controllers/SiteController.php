@@ -147,6 +147,8 @@ class SiteController extends Controller
 
     public function actionError()
     {
+        $response = Yii::$app->response;
+        $response->format = \yii\web\Response::FORMAT_JSON;
         $exception = Yii::$app->errorHandler->exception;
         $response = new Response();
         $response->statusCode = 400;

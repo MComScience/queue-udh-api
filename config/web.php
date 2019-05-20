@@ -14,6 +14,7 @@ $config = [
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm' => '@vendor/npm-asset',
+        '@Mpdf' => '@app/lib/mpdf/src',
     ],
     'name' => 'QUEUE UDON HOSPITAL',
     # ตั้งค่าการใช้งานภาษาไทย (Language)
@@ -100,7 +101,7 @@ $config = [
             ],
             'on beforeSend' => function ($event) {
                 $response = $event->sender;
-                if ($response->format == 'html') {
+                if ($response->format !== \yii\web\Response::FORMAT_JSON) {
                     return $response;
                 }
                 $responseData = $response->data;
@@ -192,7 +193,8 @@ $config = [
             ],
         ],
         'gridview' => [
-            'class' => '\kartik\grid\Module'
+            'class' => '\kartik\grid\Module',
+            'downloadAction' => '/user/admin/export',
         ],
         'settings' => [
             'class' => 'app\modules\settings\Module',

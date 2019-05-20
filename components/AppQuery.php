@@ -196,4 +196,102 @@ class AppQuery
 
         return $query;
     }
+
+    // คิวกำลังเรียก
+    public static function getDataCaller($params)
+    {
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
+        $query = (new Query())
+            ->select([
+                'tbl_queue.queue_id',
+                'tbl_queue.queue_no',
+                'tbl_queue.patient_id',
+                'tbl_patient.hn',
+                'tbl_patient.cid',
+                'tbl_patient.fullname',
+                'tbl_queue.queue_status_id',
+                'tbl_patient.maininscl_name',
+                'tbl_queue.dept_id',
+                'tbl_dept.dept_name',
+                'tbl_queue.priority_id',
+                'file_storage_item.base_url',
+                'file_storage_item.path',
+                'tbl_queue.created_at',
+                'tbl_caller.caller_id',
+                'tbl_caller.call_time',
+                'tbl_caller.hold_time',
+                'tbl_caller.end_time',
+                'tbl_caller.caller_status',
+                'tbl_counter_service.counter_service_name',
+                'tbl_caller.counter_service_id',
+                'tbl_caller.counter_id'
+            ])
+            ->from('tbl_queue')
+            ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
+            ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
+            ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
+            ->innerJoin('tbl_caller', 'tbl_caller.queue_id = tbl_queue.queue_id')
+            ->innerJoin('tbl_counter_service', 'tbl_counter_service.counter_service_id = tbl_caller.counter_service_id')
+            ->where([
+                'tbl_queue.queue_status_id' => TblQueue::STATUS_CALL,
+                'tbl_queue.dept_id' => $params['dept_ids'],
+                'tbl_caller.counter_service_id' => $params['counter_service_id']
+            ])
+            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->groupBy('tbl_queue.queue_id')
+            ->orderBy('tbl_caller.call_time ASC')
+            ->all();
+
+        return $query;
+    }
+
+    // คิวพัก
+    public static function getDataHold($params)
+    {
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
+        $query = (new Query())
+            ->select([
+                'tbl_queue.queue_id',
+                'tbl_queue.queue_no',
+                'tbl_queue.patient_id',
+                'tbl_patient.hn',
+                'tbl_patient.cid',
+                'tbl_patient.fullname',
+                'tbl_queue.queue_status_id',
+                'tbl_patient.maininscl_name',
+                'tbl_queue.dept_id',
+                'tbl_dept.dept_name',
+                'tbl_queue.priority_id',
+                'file_storage_item.base_url',
+                'file_storage_item.path',
+                'tbl_queue.created_at',
+                'tbl_caller.caller_id',
+                'tbl_caller.call_time',
+                'tbl_caller.hold_time',
+                'tbl_caller.end_time',
+                'tbl_caller.caller_status',
+                'tbl_counter_service.counter_service_name',
+                'tbl_caller.counter_service_id',
+                'tbl_caller.counter_id'
+            ])
+            ->from('tbl_queue')
+            ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
+            ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
+            ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
+            ->innerJoin('tbl_caller', 'tbl_caller.queue_id = tbl_queue.queue_id')
+            ->innerJoin('tbl_counter_service', 'tbl_counter_service.counter_service_id = tbl_caller.counter_service_id')
+            ->where([
+                'tbl_queue.queue_status_id' => TblQueue::STATUS_HOLD,
+                'tbl_queue.dept_id' => $params['dept_ids'],
+                'tbl_caller.counter_service_id' => $params['counter_service_id']
+            ])
+            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->groupBy('tbl_queue.queue_id')
+            ->orderBy('tbl_caller.hold_time DESC')
+            ->all();
+
+        return $query;
+    }
 }

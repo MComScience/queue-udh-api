@@ -88,7 +88,14 @@ class QueueController extends ActiveController
                 'profile-service-options' => ['GET'],
                 'call-wait' => ['POST'],
                 'data-wait-by-hn' => ['POST'],
-                'end-wait' => ['POST']
+                'end-wait' => ['POST'],
+                'data-caller' => ['POST'],
+                'recall' => ['POST'],
+                'hold' => ['POST'],
+                'data-hold' => ['POST'],
+                'end' => ['POST'],
+                'call-hold' => ['POST'],
+                'end-hold' => ['POST']
             ],
         ];
         // remove authentication filter
@@ -121,7 +128,8 @@ class QueueController extends ActiveController
                     'actions' => [
                         'index', 'view', 'create', 'update', 'delete', 'departments', 'register',
                         'list-all', 'update-patient', 'data-waiting', 'profile-service-options',
-                        'call-wait','data-wait-by-hn', 'end-wait'
+                        'call-wait','data-wait-by-hn', 'end-wait', 'data-caller', 'recall', 'hold',
+                        'data-hold', 'end', 'call-hold', 'end-hold'
                     ],
                     'roles' => ['@'],
                 ],
@@ -552,10 +560,31 @@ class QueueController extends ActiveController
         return $data;
     }
 
+    // คิวรอเรียก
     public function actionDataWaitByHn()
     {
         $params = \Yii::$app->getRequest()->getBodyParams();
         $data = AppQuery::getDataWaitByHn($params);
+        $response = \Yii::$app->getResponse();
+        $response->setStatusCode(200);
+        return $data;
+    }
+
+    // คิวกำลังเรียก
+    public function actionDataCaller()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $data = AppQuery::getDataCaller($params);
+        $response = \Yii::$app->getResponse();
+        $response->setStatusCode(200);
+        return $data;
+    }
+
+    // คิวพัก
+    public function actionDataHold()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $data = AppQuery::getDataHold($params);
         $response = \Yii::$app->getResponse();
         $response->setStatusCode(200);
         return $data;
@@ -598,13 +627,129 @@ class QueueController extends ActiveController
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
             'call_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเรียก
             'end_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเสร็จสิ้น
+            'caller_status' => TblCaller::STATUS_CALL_END // 1
+        ]);
+        $modelQueue->queue_status_id = TblQueue::STATUS_END;
+        if($modelCall->save() && $modelQueue->save()){
+            return ArrayHelper::merge($params, [
+                'event_on' => 'tbl_wait',
+                'caller' => $modelCall
+            ]);
+        } else {
+            throw new HttpException(422, Json::encode($modelCall->errors));
+        }
+    }
+
+    // เรียกคิวซ้ำ
+    public function actionRecall()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $modelQueue = $this->findModelQueue($params['queue']['queue_id']);
+        $modelCall = $this->findModelCaller($params['queue']['caller_id']);
+        $modelCall->setAttributes([
+            'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+            'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
+            'call_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเรียก
+            'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
+        ]);
+        $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
+        if($modelCall->save() && $modelQueue->save()){
+            return ArrayHelper::merge($params, [
+                'sources' => $this->getSourceMediaFiles($modelQueue['queue_no'], $params['counter_service']['key']),
+                'event_on' => 'tbl_caller',
+                'caller' => $modelCall
+            ]);
+        } else {
+            throw new HttpException(422, Json::encode($modelCall->errors));
+        }
+    }
+
+    // พักคิว
+    public function actionHold()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $modelQueue = $this->findModelQueue($params['queue']['queue_id']);
+        $modelCall = $this->findModelCaller($params['queue']['caller_id']);
+        $modelCall->setAttributes([
+            'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+            'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
+            'hold_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเรียก
+            'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
+        ]);
+        $modelQueue->queue_status_id = TblQueue::STATUS_HOLD;
+        if($modelCall->save() && $modelQueue->save()){
+            return ArrayHelper::merge($params, [
+                'event_on' => 'tbl_caller',
+                'caller' => $modelCall
+            ]);
+        } else {
+            throw new HttpException(422, Json::encode($modelCall->errors));
+        }
+    }
+
+    //เสร็จสิ้นคิว
+    public function actionEnd()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $modelQueue = $this->findModelQueue($params['queue']['queue_id']);
+        $modelCall = $this->findModelCaller($params['queue']['caller_id']);
+        $modelCall->setAttributes([
+            'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+            'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
+            'end_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเรียก
             'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
         if($modelCall->save() && $modelQueue->save()){
             return ArrayHelper::merge($params, [
+                'event_on' => 'tbl_caller',
+                'caller' => $modelCall
+            ]);
+        } else {
+            throw new HttpException(422, Json::encode($modelCall->errors));
+        }
+    }
+
+    // เรียกคิวจากรายการพักคิว
+    public function actionCallHold()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $modelQueue = $this->findModelQueue($params['queue']['queue_id']);
+        $modelCall = $this->findModelCaller($params['queue']['caller_id']);
+        $modelCall->setAttributes([
+            'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+            'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
+            'call_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเรียก
+            'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
+        ]);
+        $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
+        if($modelCall->save() && $modelQueue->save()){
+            return ArrayHelper::merge($params, [
                 'sources' => $this->getSourceMediaFiles($modelQueue['queue_no'], $params['counter_service']['key']),
-                'event_on' => 'tbl_wait',
+                'event_on' => 'tbl_hold',
+                'caller' => $modelCall
+            ]);
+        } else {
+            throw new HttpException(422, Json::encode($modelCall->errors));
+        }
+    }
+
+    // เสร็จสิ้นคิว จากรายการพักคิว
+    public function actionEndHold()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $modelQueue = $this->findModelQueue($params['queue']['queue_id']);
+        $modelCall = $this->findModelCaller($params['queue']['caller_id']);
+        $modelCall->setAttributes([
+            'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+            'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
+            'end_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเรียก
+            'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
+        ]);
+        $modelQueue->queue_status_id = TblQueue::STATUS_END;
+        if($modelCall->save() && $modelQueue->save()){
+            return ArrayHelper::merge($params, [
+                'event_on' => 'tbl_hold',
                 'caller' => $modelCall
             ]);
         } else {
