@@ -17,6 +17,9 @@ class SiteController extends Controller
 {
     use ModelTrait;
 
+    const MSG_HN_DUPLICATE = 'พบข้อมูลผู้รับบริการมากกว่า 1 HN กรุณาติดต่อห้องบัตร';
+    const MSG_NO_DATA = 'ไม่พบข้อมูลผู้รับบริการ กรุณากรอกแบบฟอร์มที่ห้องบัตร';
+
     /**
      * {@inheritdoc}
      */
@@ -245,13 +248,17 @@ class SiteController extends Controller
             'hn' => '-',
             'fullname' => '-'
         ];
-        if ($msg !== 'ไม่พบข้อมูลผู้รับบริการ กรุณากรอกแบบฟอร์มที่ One stop service') {
-            $client = new Client(['baseUrl' => 'http://10.188.231.11:8081/api']);
+        if ($msg !== self::MSG_NO_DATA) {
+            $client = new Client(['baseUrl' => Yii::$app->params['API_BASE_URL']]);
+            $url = '/kiosk/get-pt-profile?q=' . $q;
+            if($msg == self::MSG_HN_DUPLICATE){
+                $url = '/kiosk/get-pt-profile?q=' . $q. '&action=get_dup_detail';
+            }
             $response = $client->createRequest()
                 ->setMethod('GET')
-                ->setUrl('/kiosk/get-pt-profile?q=' . $q)
+                ->setUrl($url)
                 ->addHeaders(['content-type' => 'application/json'])
-                ->addHeaders(['X-Access-Token' => '6615e94372943853d7dad7a3d847440e'])
+                ->addHeaders(['X-Access-Token' => Yii::$app->params['API_TOKEN']])
                 ->send();
             if ($response->isOk) {
                 $data = $response->getData();
@@ -260,9 +267,9 @@ class SiteController extends Controller
                 }
             }
             // save log
-            $logger->info('One stop service', [
+            $logger->info('ติดต่อห้องบัตร', [
+                'msg' => $msg,
                 'patient' => $patient,
-                'msg' => $msg
             ]);
             return $this->renderAjax('print-one-stop', [
                 'patient' => $patient,
@@ -270,9 +277,9 @@ class SiteController extends Controller
             ]);
         } else {
             // save log
-            $logger->info('One stop service', [
+            $logger->info('ติดต่อห้องบัตร', [
+                'msg' => $msg,
                 'patient' => $patient,
-                'msg' => $msg
             ]);
             return $this->renderAjax('print-one-stop', [
                 'patient' => $patient,

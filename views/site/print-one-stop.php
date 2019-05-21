@@ -58,7 +58,7 @@ $this->registerCssFile("@web/css/80mm.min.css", [
         <span style="font-size:16px">
           <strong>HN</strong> :
           <strong>
-            <?= $patient['hn']; ?>
+            <?= is_array($patient['hn']) ? '-' : $patient['hn']; ?>
           </strong>
         </span>
         </h3>
@@ -85,6 +85,21 @@ $this->registerCssFile("@web/css/80mm.min.css", [
           </i>
         </span>
         </p>
+        <?php if($msg == 'พบข้อมูลผู้รับบริการมากกว่า 1 HN กรุณาติดต่อห้องบัตร') :?>
+        <p
+            style="text-align:center;font-size: 13px;color: #5a5a5a;margin-left: 5px;margin-right: 5px;"
+        >
+          <span style="font-size:14px">
+            <i style="font-weight: bold">
+              HN ที่พบ <br>
+              <?php foreach ($patient['hn'] as $k => $hn) :?>
+              <?= $k+1 .'.'.$hn ?>
+              <br>
+              <?php endforeach; ?>
+            </i>
+          </span>
+        </p>
+        <?php endif; ?>
     </div>
 
     <!-- <div class="row">
