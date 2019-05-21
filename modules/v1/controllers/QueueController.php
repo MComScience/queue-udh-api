@@ -202,15 +202,22 @@ class QueueController extends ActiveController
                             $imgUrl = Html::imgUrl($modelStorage['path']); // ลิ้งค์รูปภาพ
                         }
                     }
-                    $attrs = $modelQueue->getAttributes();
-                    $queue = [];
-                    foreach ($attrs as $key => $attr) {
-                        # code...
-                        $queue = ArrayHelper::merge($queue, [
-                            $attr => $modelQueue->{$attr},
-                            'name' => $modelQueue->profile->name
-                        ]);
-                    }
+                    $queue = [
+                        'queue_id' => $modelQueue['queue_id'],
+                        'queue_no' => $modelQueue['queue_no'],
+                        'patient_id' => $modelQueue['patient_id'],
+                        'dept_group_id' => $modelQueue['dept_group_id'],
+                        'dept_id' => $modelQueue['dept_id'],
+                        'priority_id' => $modelQueue['priority_id'],
+                        'queue_station' => $modelQueue['queue_station'],
+                        'case_patient' => $modelQueue['case_patient'],
+                        'queue_status_id' => $modelQueue['queue_status_id'],
+                        'created_at' => $modelQueue['created_at'],
+                        'updated_at' => $modelQueue['updated_at'],
+                        'created_by' => $modelQueue['created_by'],
+                        'updated_by' => $modelQueue['updated_by'],
+                        'name' => $modelQueue->profile ? $modelQueue->profile->name : ''
+                    ];
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();
                     $response->setStatusCode(201);
