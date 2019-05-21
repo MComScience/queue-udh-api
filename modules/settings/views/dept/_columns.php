@@ -41,6 +41,9 @@ return [
     [
         'class'=>'\kartik\grid\DataColumn',
         'attribute'=>'card_id',
+        'value' => function ($model) {
+            return $model->card ? $model->card->card_name : '';
+        },
     ],
     [
         'class'=>'\kartik\grid\DataColumn',

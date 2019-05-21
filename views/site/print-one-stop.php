@@ -48,7 +48,7 @@ $this->registerCssFile("@web/css/80mm.min.css", [
         class="one-stop"
       >
         <span style="font-size:16px">
-          <strong>One stop service</strong>
+          <strong>ห้องบัตร</strong>
         </span>
       </p>
 
@@ -87,7 +87,7 @@ $this->registerCssFile("@web/css/80mm.min.css", [
         </p>
     </div>
 
-    <div class="row">
+    <!-- <div class="row">
         <div class="col-md-12 col-sm-12 col-xs-12" style="padding: 10px 0px 0px;">
             <h5
                 class="color"
@@ -99,7 +99,7 @@ $this->registerCssFile("@web/css/80mm.min.css", [
                 >
             </h5>
         </div>
-    </div>
+    </div> -->
 
     <div class="row">
         <div class="col-md-6 col-sm-6 col-xs-6" style="padding: 10px 10% 0px;">

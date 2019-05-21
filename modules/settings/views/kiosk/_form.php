@@ -9,7 +9,11 @@ use app\modules\v1\models\TblDeptGroup;
 /* @var $model app\modules\v1\models\TblKiosk */
 /* @var $form yii\widgets\ActiveForm */
 ?>
-
+<style>
+#tblkiosk-departments label {
+    display: flex;
+}
+</style>
 <div class="tbl-kiosk-form">
 
     <?php $form = ActiveForm::begin(); ?>

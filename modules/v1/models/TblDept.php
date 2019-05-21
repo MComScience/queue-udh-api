@@ -58,7 +58,7 @@ class TblDept extends \yii\db\ActiveRecord
         return [
             'dept_id' => 'รหัสแผก',
             'dept_name' => 'ชื่อแผนก',
-            'dept_group_id' => 'รหัสกลุ่ม/แผนก',
+            'dept_group_id' => 'กลุ่ม/แผนก',
             'dept_prefix' => 'ตัวอักษรนำหน้าเลขคิว',
             'dept_num_digit' => 'จำนวนหลักเลขคิว',
             'card_id' => 'แบบบัตรคิว',

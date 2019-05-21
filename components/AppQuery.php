@@ -13,11 +13,12 @@ class AppQuery
     public static function getQueueRegister($params)
     {
         $query = (new Query())
-            ->select(['tbl_queue.*'])
+            ->select(['tbl_queue.*', '`profile`.`name`'])
             ->from('tbl_queue')
             ->where(['tbl_queue.dept_id' => $params['dept_id']])
             ->andWhere(['between', 'tbl_queue.created_at', $params['startDate'], $params['endDate']])
-            ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id');
+            ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
+            ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by');
         if(!empty($params['cid'])){
             $query->andWhere(['tbl_patient.cid' => $params['cid']]);
         } else {
@@ -77,12 +78,14 @@ class AppQuery
                 'tbl_patient.fullname',
                 'tbl_dept.dept_name',
                 'file_storage_item.base_url',
-                'file_storage_item.path'
+                'file_storage_item.path',
+                '`profile`.`name`'
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
             ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
             ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
+            ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
             ->andWhere(['between', 'tbl_queue.created_at', $params['startDate'], $params['endDate']])
             ->orderBy('tbl_queue.created_at ASC')
             ->all();

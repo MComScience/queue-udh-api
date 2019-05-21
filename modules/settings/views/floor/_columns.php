@@ -10,20 +10,13 @@ return [
         'class' => 'kartik\grid\SerialColumn',
         'width' => '30px',
     ],
-    [
-        'class'=>'\kartik\grid\DataColumn',
-        'attribute'=>'dept_group_id',
-    ],
-    [
+        [
         'class'=>'\kartik\grid\DataColumn',
         'attribute'=>'floor_id',
-        'value' => function($model){
-            return $model->floor ? $model->floor->floor_name : '';
-        }
     ],
     [
         'class'=>'\kartik\grid\DataColumn',
-        'attribute'=>'dept_group_name',
+        'attribute'=>'floor_name',
     ],
     [
         'class' => 'kartik\grid\ActionColumn',

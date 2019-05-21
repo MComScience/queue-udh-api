@@ -21,7 +21,11 @@ use app\modules\v1\models\TblPrefix;
     <?= $form->field($model, 'dept_name')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'dept_group_id')->widget(Select2::classname(), [
-        'data' => ArrayHelper::map(TblDeptGroup::find()->asArray()->all(), 'dept_group_id', 'dept_group_name'),
+        'data' => ArrayHelper::map((new \yii\db\Query())
+        ->select(['tbl_dept_group.dept_group_id', 'CONCAT(\'(\',IFNULL(tbl_floor.floor_name,\'\'),\') \', tbl_dept_group.dept_group_name) as dept_group_name'])
+        ->from('tbl_dept_group')
+        ->innerJoin('tbl_floor', 'tbl_floor.floor_id = tbl_dept_group.floor_id')
+        ->all(), 'dept_group_id', 'dept_group_name'),
         'options' => ['placeholder' => 'เลือกกลุ่มแผนก...'],
         'pluginOptions' => [
             'allowClear' => true

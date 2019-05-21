@@ -5,12 +5,12 @@ namespace app\modules\v1\models\search;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\modules\v1\models\TblDeptGroup;
+use app\modules\v1\models\TblFloor;
 
 /**
- * TblDeptGroupSearch represents the model behind the search form about `app\modules\v1\models\TblDeptGroup`.
+ * TblFloorSearch represents the model behind the search form about `app\modules\v1\models\TblFloor`.
  */
-class TblDeptGroupSearch extends TblDeptGroup
+class TblFloorSearch extends TblFloor
 {
     /**
      * @inheritdoc
@@ -18,8 +18,8 @@ class TblDeptGroupSearch extends TblDeptGroup
     public function rules()
     {
         return [
-            [['dept_group_id'], 'integer'],
-            [['dept_group_name'], 'safe'],
+            [['floor_id'], 'integer'],
+            [['floor_name'], 'safe'],
         ];
     }
 
@@ -41,7 +41,7 @@ class TblDeptGroupSearch extends TblDeptGroup
      */
     public function search($params)
     {
-        $query = TblDeptGroup::find()->orderBy('dept_group_order asc');
+        $query = TblFloor::find();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -56,10 +56,10 @@ class TblDeptGroupSearch extends TblDeptGroup
         }
 
         $query->andFilterWhere([
-            'dept_group_id' => $this->dept_group_id,
+            'floor_id' => $this->floor_id,
         ]);
 
-        $query->andFilterWhere(['like', 'dept_group_name', $this->dept_group_name]);
+        $query->andFilterWhere(['like', 'floor_name', $this->floor_name]);
 
         return $dataProvider;
     }

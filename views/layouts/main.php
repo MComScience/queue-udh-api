@@ -47,6 +47,7 @@ AppAsset::register($this);
                 'label' => 'ตั้งค่า',
                 'items' => [
                     ['label' => 'ตัวอักษรหน้าเลขคิว', 'url' => '/settings/prefix/index'],
+                    ['label' => 'ชั้น', 'url' => '/settings/floor/index'],
                     ['label' => 'กลุ่มแผนก', 'url' => '/settings/dept-group/index'],
                     // '<li class="divider"></li>',
                     // '<li class="dropdown-header">Dropdown Header</li>',

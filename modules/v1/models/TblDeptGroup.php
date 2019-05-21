@@ -9,6 +9,8 @@ use Yii;
  *
  * @property int $dept_group_id รหัสกลุ่ม/แผนก
  * @property string $dept_group_name ชื่อกลุ่ม/แผนก
+ * @property int $dept_group_order ลำดับการแสดงผล
+ * @property int $floor_id ชั้น
  */
 class TblDeptGroup extends \yii\db\ActiveRecord
 {
@@ -27,9 +29,8 @@ class TblDeptGroup extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['dept_group_name'], 'required'],
-            [['dept_group_order'], 'integer'],
-            [['order_group'], 'safe'],
+            [['dept_group_name', 'floor_id'], 'required'],
+            [['dept_group_order', 'floor_id'], 'integer'],
             [['dept_group_name'], 'string', 'max' => 255],
         ];
     }
@@ -43,6 +44,7 @@ class TblDeptGroup extends \yii\db\ActiveRecord
             'dept_group_id' => 'รหัสกลุ่ม/แผนก',
             'dept_group_name' => 'ชื่อกลุ่ม/แผนก',
             'dept_group_order' => 'ลำดับการแสดงผล',
+            'floor_id' => 'ชั้น',
         ];
     }
 
@@ -50,5 +52,11 @@ class TblDeptGroup extends \yii\db\ActiveRecord
     public function getDepts()
     {
         return $this->hasMany(TblDept::className(), ['dept_group_id' => 'dept_group_id']);
+    }
+
+    // ชั้น
+    public function getFloor()
+    {
+        return $this->hasOne(TblFloor::className(), ['floor_id' => 'floor_id']);
     }
 }

@@ -29,6 +29,7 @@ use app\modules\v1\models\TblPriority;
 use app\modules\v1\models\TblProfileService;
 use app\modules\v1\models\TblCounterService;
 use app\modules\v1\models\TblCaller;
+use app\modules\v1\models\TblFloor;
 use app\helpers\Enum;
 use app\components\AppQuery;
 use app\components\SoundComponent;
@@ -201,11 +202,20 @@ class QueueController extends ActiveController
                             $imgUrl = Html::imgUrl($modelStorage['path']); // ลิ้งค์รูปภาพ
                         }
                     }
+                    $attrs = $modelQueue->getAttributes();
+                    $queue = [];
+                    foreach ($attrs as $key => $attr) {
+                        # code...
+                        $queue = ArrayHelper::merge($queue, [
+                            $attr => $modelQueue->{$attr},
+                            'name' => $modelQueue->profile->name
+                        ]);
+                    }
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();
                     $response->setStatusCode(201);
                     return [
-                        'queue' => $modelQueue, // ข้อมูลคิว
+                        'queue' => $queue, // ข้อมูลคิว
                         'patient' => $modelPatient, // ข้อมูลผู้ป่วย
                         'dept' => $modelDept, // ข้อมูลแผนก
                         'dept_group' => $modelDeptGroup, // ข้อมูลกลุ่มแผนก
@@ -317,6 +327,7 @@ class QueueController extends ActiveController
     public function actionDepartments($kioskId = null)
     {
         $response = [];
+        $modelFloors = TblFloor::find()->all();
         if ($kioskId) {
             $modelKiosk = $this->findModelKiosk($kioskId);
             $depts = !empty($modelKiosk['departments']) ? Json::decode($modelKiosk['departments']) : [];
@@ -330,8 +341,51 @@ class QueueController extends ActiveController
                 ->orderBy('dept_order asc')
                 ->all()
             ]; */
+            foreach ($modelFloors as $key => $floor) {
+                # code...
+                $deptGroups = TblDeptGroup::find()->where(['dept_group_id' => $depts, 'floor_id' => $floor['floor_id']])->orderBy('dept_group_order asc')->all();
+                $groups = [];
+                foreach ($deptGroups as $k => $deptGroup) {
+                    # code...
+                    $departments = TblDept::find()->where([
+                        'dept_group_id' => $deptGroup['dept_group_id'],
+                        'dept_status' => TblDept::STATUS_ACTIVE
+                    ])
+                    ->orderBy('dept_order asc')
+                    ->all();
+                    $groups[] = [
+                        'dept_group' => $deptGroup,
+                        'departments' => $departments
+                    ];
+                }
+                $response[] = [
+                    'floor' => $floor,
+                    'dept_groups' => $groups
+                ];
+            }
         } else {
-            $deptGroups = TblDeptGroup::find()->orderBy('dept_group_order asc')->all();
+            foreach ($modelFloors as $key => $floor) {
+                # code...
+                $deptGroups = TblDeptGroup::find()->where(['floor_id' => $floor['floor_id']])->orderBy('dept_group_order asc')->all();
+                $groups = [];
+                foreach ($deptGroups as $k => $deptGroup) {
+                    # code...
+                    $departments = TblDept::find()->where([
+                        'dept_group_id' => $deptGroup['dept_group_id'],
+                        'dept_status' => TblDept::STATUS_ACTIVE
+                    ])
+                    ->orderBy('dept_order asc')
+                    ->all();
+                    $groups[] = [
+                        'dept_group' => $deptGroup,
+                        'departments' => $departments
+                    ];
+                }
+                $response[] = [
+                    'floor' => $floor,
+                    'dept_groups' => $groups
+                ];
+            }
             /* $response[] = [
                 'dept_group' => ['dept_group_id' => time(), 'dept_group_name' => 'แผนกทั้งหมด'],
                 'departments' => TblDept::find()->where([
@@ -341,7 +395,7 @@ class QueueController extends ActiveController
                 ->all()
             ]; */
         }
-        foreach ($deptGroups as $deptGroup) {
+        /* foreach ($deptGroups as $deptGroup) {
             $departments = TblDept::find()->where([
                 'dept_group_id' => $deptGroup['dept_group_id'],
                 'dept_status' => TblDept::STATUS_ACTIVE
@@ -352,7 +406,7 @@ class QueueController extends ActiveController
                 'dept_group' => $deptGroup,
                 'departments' => $departments
             ];
-        }
+        } */
         return $response;
     }
 

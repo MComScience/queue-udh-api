@@ -142,6 +142,11 @@ class TblQueue extends \yii\db\ActiveRecord
         return $this->hasOne(TblPriority::className(), ['priority_id' => 'priority_id']);
     }
 
+    public function getProfile()
+    {
+        return $this->hasOne(Profile::className(), ['user_id' => 'created_by']);
+    }
+
     // ประเภทคิว
     public function getQueueTypeName($type)
     {
