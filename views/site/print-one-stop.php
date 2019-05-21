@@ -93,7 +93,7 @@ $this->registerCssFile("@web/css/80mm.min.css", [
             <i style="font-weight: bold">
               HN ที่พบ <br>
               <?php foreach ($patient['hn'] as $k => $hn) :?>
-              <?= $k+1 .'.'.$hn ?>
+              <?= $k+1 .'.  '.$hn ?>
               <br>
               <?php endforeach; ?>
             </i>
