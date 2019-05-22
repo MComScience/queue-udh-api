@@ -96,7 +96,8 @@ class QueueController extends ActiveController
                 'data-hold' => ['POST'],
                 'end' => ['POST'],
                 'call-hold' => ['POST'],
-                'end-hold' => ['POST']
+                'end-hold' => ['POST'],
+                'call-selected' => ['POST'],
             ],
         ];
         // remove authentication filter
@@ -130,7 +131,7 @@ class QueueController extends ActiveController
                         'index', 'view', 'create', 'update', 'delete', 'departments', 'register',
                         'list-all', 'update-patient', 'data-waiting', 'profile-service-options',
                         'call-wait','data-wait-by-hn', 'end-wait', 'data-caller', 'recall', 'hold',
-                        'data-hold', 'end', 'call-hold', 'end-hold'
+                        'data-hold', 'end', 'call-hold', 'end-hold', 'call-selected'
                     ],
                     'roles' => ['@'],
                 ],
@@ -159,6 +160,7 @@ class QueueController extends ActiveController
         $modelDeptGroup = $this->findModelDeptGroup($modelDept['dept_group_id']); // กลุ่มแผนก
         // ถ้าลงทะเบียนแผนกเดิม
         if ($rows && $rows !== null) {
+            $logger->info('Select QueueRegister', ['hn' => $params['user']['hn'], 'dept_id' => $modelDept['dept_id'], 'rows' => $rows]); 
             $modelPatient = $this->findModelPatient($rows['patient_id']); // ข้อมูลผู้ป่วย
             $modelPatient->setAttributes($params['user']);
             $modelPatient->appoint = empty($params['user']['appoint']) ? '' : Json::encode($params['user']['appoint']); // นัดหมาย
@@ -675,6 +677,56 @@ class QueueController extends ActiveController
             throw new HttpException(422, Json::encode($modelCall->errors));
         }
     }
+
+    // เรียกคิวที่เลือก
+    public function actionCallSelected()
+    {
+        $response = [];
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $queues = $params['queues'];
+        $transaction = TblCaller::getDb()->beginTransaction();
+        try {
+            foreach ($queues as $key => $queue) {
+                # code...
+                $modelQueue = $this->findModelQueue($queue['queue_id']);
+                $modelCall = new TblCaller();
+                $modelCall->setAttributes([
+                    'queue_id' => $queue['queue_id'], // รหัสคิว
+                    'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+                    'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
+                    'call_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเรียก
+                    'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
+                ]);
+                $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
+                if($modelCall->save() && $modelQueue->save()){
+                    $response[] = [
+                        'counter' => $params['counter'],
+                        'counter_service' => $params['counter_service'],
+                        'profile_service' => $params['profile_service'],
+                        'queue' => $queue,
+                        'sources' => $this->getSourceMediaFiles($modelQueue['queue_no'], $params['counter_service']['key']),
+                        'event_on' => 'tbl_wait',
+                        'caller' => $modelCall
+                    ];
+                } else {
+                    $transaction->rollBack();
+                    throw new HttpException(422, Json::encode($modelCall->errors));
+                }
+            }
+            // ...other DB operations...
+            $transaction->commit();
+            return $response;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+       
+        
+    }
+
 
     // เสร็จสิ้นคิว กำลังรอเรียก
     public function actionEndWait()

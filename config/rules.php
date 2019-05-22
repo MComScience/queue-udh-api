@@ -100,6 +100,8 @@ return [
             'OPTIONS call-hold' => 'options',
             'POST end-hold' => 'end-hold',
             'OPTIONS end-hold' => 'options',
+            'POST call-selected' => 'call-selected',
+            'OPTIONS call-selected' => 'options',
         ]
     ],
 ];

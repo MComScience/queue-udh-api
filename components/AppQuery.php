@@ -18,7 +18,8 @@ class AppQuery
             ->where(['tbl_queue.dept_id' => $params['dept_id']])
             ->andWhere(['between', 'tbl_queue.created_at', $params['startDate'], $params['endDate']])
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
-            ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by');
+            ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
+            ->groupBy('tbl_queue.queue_id');
         if(!empty($params['cid'])){
             $query->andWhere(['tbl_patient.cid' => $params['cid']]);
         } else {
@@ -35,9 +36,11 @@ class AppQuery
         $query = (new \yii\db\Query())
         ->select(['tbl_queue.*', 'tbl_dept.*'])
         ->from('tbl_queue')
-        ->where(['patient_id' => ArrayHelper::getColumn($patient, 'patient_id')])
+        ->where(['tbl_patient.patient_id' => ArrayHelper::getColumn($patient, 'patient_id')])
         ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
         ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
+        ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
+        ->groupBy('tbl_queue.queue_id')
         ->all();
         return $query;
     }
