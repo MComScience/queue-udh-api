@@ -51,9 +51,9 @@ $config = [
             'class' => 'yii\rbac\DbManager',
         ],
         'cache' => [
-            // 'class' => 'yii\caching\FileCache',
-            'class' => 'yii\redis\Cache',
-            'redis' => 'redis'
+            'class' => 'yii\caching\FileCache',
+            /* 'class' => 'yii\redis\Cache',
+            'redis' => 'redis' */
         ],
         'redis' => [
             'class' => 'yii\redis\Connection',
@@ -73,7 +73,15 @@ $config = [
             // send all mails to a file by default. You have to set
             // 'useFileTransport' to false and configure a transport
             // for the mailer to send real emails.
-            'useFileTransport' => true,
+            'useFileTransport' => false,
+            'transport' => [
+                'class' => 'Swift_SmtpTransport',
+                'host' => 'smtp.gmail.com',
+                'username' => 'andamandev888@gmail.com',
+                'password' => 'b8888888',
+                'port' => '465',
+                'encryption' => 'ssl',
+            ],
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
@@ -82,9 +90,28 @@ $config = [
                     'class' => 'yii\log\DbTarget',
                     'levels' => ['error', 'warning'],
                 ],
+                [
+                    'class' => 'yii\log\EmailTarget',
+                    'mailer' => 'mailer',
+                    'levels' => ['error'],
+                    'categories' => ['yii\db\*'],
+                    'message' => [
+                       'from' => ['andamandev888@gmail.com'],
+                       'to' => ['mcomsciencermu@gmail.com'],
+                       'subject' => 'Log error ระบบคิว รพ อุดรธานี',
+                    ],
+                ],
             ],
         ],
         'db' => $db,
+        'db_mssql' => [
+            'class' => 'yii\db\Connection',
+            //'dsn' => 'sqlsrv:Server=192.168.0.1;Database=UDON2',
+            'dsn' => 'sqlsrv:Server=M_COMSCIENCE-NB\SQLEXPRESS;Database=udh_test',
+            'username' => 'sa',
+            'password' => 'b8888888',
+            'charset' => 'utf8',
+        ],
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
