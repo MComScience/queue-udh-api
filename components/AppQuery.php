@@ -115,12 +115,14 @@ class AppQuery
                 'tbl_queue.priority_id',
                 'tbl_queue.created_at',
                 'file_storage_item.base_url',
-                'file_storage_item.path'
+                'file_storage_item.path',
+                '`profile`.name'
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
             ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
             ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
+            ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_WAIT,
                 'tbl_queue.dept_id' => $params['dept_ids'],
@@ -146,12 +148,14 @@ class AppQuery
                 'tbl_queue.priority_id',
                 'tbl_queue.created_at',
                 'file_storage_item.base_url',
-                'file_storage_item.path'
+                'file_storage_item.path',
+                '`profile`.name'
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
             ->innerJoin('tbl_dept', 'tbl_dept.dept_id = tbl_queue.dept_id')
             ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
+            ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_WAIT,
                 'tbl_queue.dept_id' => $params['dept_ids'],
@@ -231,7 +235,8 @@ class AppQuery
                 'tbl_caller.caller_status',
                 'tbl_counter_service.counter_service_name',
                 'tbl_caller.counter_service_id',
-                'tbl_caller.counter_id'
+                'tbl_caller.counter_id',
+                '`profile`.name'
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
@@ -239,6 +244,7 @@ class AppQuery
             ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
             ->innerJoin('tbl_caller', 'tbl_caller.queue_id = tbl_queue.queue_id')
             ->innerJoin('tbl_counter_service', 'tbl_counter_service.counter_service_id = tbl_caller.counter_service_id')
+            ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_CALL,
                 'tbl_queue.dept_id' => $params['dept_ids'],
@@ -280,7 +286,8 @@ class AppQuery
                 'tbl_caller.caller_status',
                 'tbl_counter_service.counter_service_name',
                 'tbl_caller.counter_service_id',
-                'tbl_caller.counter_id'
+                'tbl_caller.counter_id',
+                '`profile`.name'
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
@@ -288,6 +295,7 @@ class AppQuery
             ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
             ->innerJoin('tbl_caller', 'tbl_caller.queue_id = tbl_queue.queue_id')
             ->innerJoin('tbl_counter_service', 'tbl_counter_service.counter_service_id = tbl_caller.counter_service_id')
+            ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_HOLD,
                 'tbl_queue.dept_id' => $params['dept_ids'],

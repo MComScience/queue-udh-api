@@ -63,7 +63,7 @@ AppAsset::register($this);
             ],
             //['label' => 'Contact', 'url' => ['/site/contact']],
             Yii::$app->user->isGuest ? (
-            ['label' => 'Login', 'url' => ['/auth/login']]
+            ['label' => 'เข้าสู่ระบบ', 'url' => ['/auth/login']]
             ) : (
                 '<li>'
                 . Html::beginForm(['/auth/logout'], 'post')

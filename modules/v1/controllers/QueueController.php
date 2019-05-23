@@ -767,6 +767,8 @@ class QueueController extends ActiveController
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
         if($modelCall->save() && $modelQueue->save()){
+            $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
+            $params['queue']['call_time'] = Yii::$app->formatter->asDate($modelCall['call_time'],'php:H:i');
             return ArrayHelper::merge($params, [
                 'sources' => $this->getSourceMediaFiles($modelQueue['queue_no'], $params['counter_service']['key']),
                 'event_on' => 'tbl_caller',
@@ -786,11 +788,13 @@ class QueueController extends ActiveController
         $modelCall->setAttributes([
             'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
-            'hold_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาเรียก
+            'hold_time' => Yii::$app->formatter->asDate('now','php:Y-m-d H:i:s'), // เวลาพักคิว
             'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_HOLD;
         if($modelCall->save() && $modelQueue->save()){
+            $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
+            $params['queue']['hold_time'] = $modelCall['hold_time'];
             return ArrayHelper::merge($params, [
                 'event_on' => 'tbl_caller',
                 'caller' => $modelCall
@@ -814,6 +818,8 @@ class QueueController extends ActiveController
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
         if($modelCall->save() && $modelQueue->save()){
+            $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
+            $params['queue']['end_time'] = Yii::$app->formatter->asDate($modelCall['end_time'],'php:H:i');
             return ArrayHelper::merge($params, [
                 'event_on' => 'tbl_caller',
                 'caller' => $modelCall
@@ -837,6 +843,8 @@ class QueueController extends ActiveController
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
         if($modelCall->save() && $modelQueue->save()){
+            $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
+            $params['queue']['call_time'] = $modelCall['call_time'];
             return ArrayHelper::merge($params, [
                 'sources' => $this->getSourceMediaFiles($modelQueue['queue_no'], $params['counter_service']['key']),
                 'event_on' => 'tbl_hold',
@@ -861,6 +869,8 @@ class QueueController extends ActiveController
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
         if($modelCall->save() && $modelQueue->save()){
+            $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
+            $params['queue']['end_time'] = Yii::$app->formatter->asDate($modelCall['end_time'],'php:H:i');
             return ArrayHelper::merge($params, [
                 'event_on' => 'tbl_hold',
                 'caller' => $modelCall
