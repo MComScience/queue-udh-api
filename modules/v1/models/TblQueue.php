@@ -163,6 +163,22 @@ class TblQueue extends \yii\db\ActiveRecord
         ];
     }
 
+    // กรณีผู้ป่วย
+    public function getCasePatientTypes()
+    {
+        return [
+            1 => 'เดินได้',
+            2 => 'รถนั่ง',
+            3 => 'รถนอน'
+        ];
+    }
+
+    public function getCasePatientName()
+    {
+        $cases = $this->getCasePatientTypes();
+        return ArrayHelper::getValue($cases, $this->case_patient, '');
+    }
+
     private function generateNumber()
     {
         $department = $this->findModelDept($this->dept_id); // แผนก

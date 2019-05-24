@@ -215,7 +215,7 @@ class SiteController extends Controller
             '{number}' => $model['queue_no'], // เลขคิว
             '{dept_name}' => $department['dept_name'], // แผนก
             '{message_right}' => $modelPatient['maininscl_name'], // ชื่อสิทธิ
-            '{fullname}' => $modelPatient['fullname'], // ชื่อผู้ป่วย
+            '{fullname}' => $modelPatient['fullname']. ' (<i style="font-size: 13px;">'.$model->getCasePatientName().'</i>)', // ชื่อผู้ป่วย + กรณีผู้ป่วย
             '{date}' => Yii::$app->formatter->asDate('now', 'php: d M ') . (Yii::$app->formatter->asDate('now', 'php:Y') + 543),
             '{time}' => Yii::$app->formatter->asDate('now', 'php: H:i น.')
         ]);

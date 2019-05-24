@@ -434,7 +434,7 @@ class QueueController extends ActiveController
         } else { // cid
             $patient = AppQuery::getPatientByCid($q);
         }
-        if (!$patient) {
+        if (!$patient || empty($q)) {
             return [
                 'message' => 'ไม่พบข้อมูลคิว'
             ];
