@@ -12,6 +12,7 @@ use app\models\ContactForm;
 use yii\helpers\Json;
 use app\modules\v1\traits\ModelTrait;
 use yii\httpclient\Client;
+use app\modules\v1\models\TblQueueFailed;
 
 class SiteController extends Controller
 {
@@ -208,18 +209,18 @@ class SiteController extends Controller
         $logger = Yii::$app->logger->getLogger();
         $model = $this->findModelQueue($id);
         $modelPatient = $this->findModelPatient($model['patient_id']);
-        $department = $this->findModelDept($model['dept_id']);
-        $modelCard = $this->findModelCard($department['card_id']);
+        $service = $this->findModelService($model['service_id']);
+        $modelCard = $this->findModelCard($service['card_id']);
         $card_template = strtr($modelCard['card_template'],[
             '{hn}' => $modelPatient['hn'],
             '{number}' => $model['queue_no'], // เลขคิว
-            '{dept_name}' => $department['dept_name'], // แผนก
+            '{dept_name}' => $service['service_name'], // แผนก
             '{message_right}' => $modelPatient['maininscl_name'], // ชื่อสิทธิ
             '{fullname}' => $modelPatient['fullname']. ' (<i style="font-size: 13px;">'.$model->getCasePatientName().'</i>)', // ชื่อผู้ป่วย + กรณีผู้ป่วย
             '{date}' => Yii::$app->formatter->asDate('now', 'php: d M ') . (Yii::$app->formatter->asDate('now', 'php:Y') + 543),
             '{time}' => Yii::$app->formatter->asDate('now', 'php: H:i น.')
         ]);
-        $i = !empty($department['print_copy_qty']) ? $department['print_copy_qty'] : 1; // จำนวน copy
+        $i = !empty($service['print_copy_qty']) ? $service['print_copy_qty'] : 1; // จำนวน copy
         $template = '';
         for($x = 0; $x < $i; $x++) {
             $template .= strtr($card_template,[
@@ -234,7 +235,7 @@ class SiteController extends Controller
         ]);
         return $this->renderAjax('print', [
             'model' => $model,
-            'department' => $department,
+            'service' => $service,
             'patient' => $modelPatient,
             'template' => $template,
             'i' => $i
@@ -244,6 +245,7 @@ class SiteController extends Controller
     public function actionPrintOneStop($msg, $q)
     {
         $logger = Yii::$app->logger->getLogger();
+        $model = new TblQueueFailed();
         $patient = [
             'hn' => '-',
             'fullname' => '-'
@@ -271,11 +273,21 @@ class SiteController extends Controller
                 'msg' => $msg,
                 'patient' => $patient,
             ]);
+            $model->queue_failed_message = $msg;
+            $model->hn = is_array($patient['hn']) && isset($patient['hn']) ? Json::encode($patient['hn']) : $patient['hn'];
+            $model->fullname = isset($patient['fullname']) ? $patient['fullname'] : '';
+            $model->created_at = Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s');
+            $model->save(false);
             return $this->renderAjax('print-one-stop', [
                 'patient' => $patient,
                 'msg' => $msg
             ]);
         } else {
+            $model->queue_failed_message = $msg;
+            $model->hn = is_array($patient['hn']) && isset($patient['hn']) ? Json::encode($patient['hn']) : $patient['hn'];
+            $model->fullname = isset($patient['fullname']) ? $patient['fullname'] : '';
+            $model->created_at = Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s');
+            $model->save(false);
             // save log
             $logger->info('ติดต่อห้องบัตร', [
                 'msg' => $msg,

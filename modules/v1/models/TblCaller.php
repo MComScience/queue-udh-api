@@ -14,6 +14,7 @@ use yii\helpers\ArrayHelper;
  * @property int $queue_id รหัสคิว
  * @property int $counter_id เคาท์เตอร์
  * @property int $counter_service_id ช่องบริการ
+ * @property int $profile_service_id โปรไฟล์
  * @property string $call_time เวลาเรียก
  * @property string $hold_time เวลาพักคิว
  * @property string $end_time เวลาเสร็จสิ้น
@@ -58,8 +59,8 @@ class TblCaller extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['queue_id', 'counter_id', 'counter_service_id'], 'required'],
-            [['queue_id', 'counter_id', 'counter_service_id', 'created_by', 'updated_by', 'caller_status'], 'integer'],
+            [['queue_id', 'counter_id', 'counter_service_id', 'profile_service_id'], 'required'],
+            [['queue_id', 'counter_id', 'counter_service_id', 'profile_service_id', 'created_by', 'updated_by', 'caller_status'], 'integer'],
             [['call_time', 'hold_time', 'end_time', 'created_at', 'updated_at'], 'safe'],
         ];
     }
@@ -74,6 +75,7 @@ class TblCaller extends \yii\db\ActiveRecord
             'queue_id' => 'รหัสคิว',
             'counter_id' => 'เคาท์เตอร์',
             'counter_service_id' => 'ช่องบริการ',
+            'profile_service_id' => 'โปรไฟล์เซอร์วิส',
             'call_time' => 'เวลาเรียก',
             'hold_time' => 'เวลาพักคิว',
             'end_time' => 'เวลาเสร็จสิ้น',
@@ -101,6 +103,12 @@ class TblCaller extends \yii\db\ActiveRecord
     public function getCounterService()
     {
         return $this->hasOne(TblCounterService::className(), ['counter_service_id' => 'counter_service_id']);
+    }
+
+    // โปรไฟล์เซอร์วิส
+    public function getProfileService()
+    {
+        return $this->hasOne(TblProfileService::className(), ['profile_service_id' => 'profile_service_id']);
     }
 
     // สถานะการเรียก

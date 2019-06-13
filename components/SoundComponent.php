@@ -5,6 +5,7 @@ use app\modules\v1\traits\ModelTrait;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
+use yii\helpers\Url;
 
 class SoundComponent extends Component
 {
@@ -35,15 +36,16 @@ class SoundComponent extends Component
             $modelSound = $modelCounter->serviceNoSound;//เสียงหมายเลข (หนึ่ง สอง สาม)
             $ServiceSound = $modelCounter->serviceSound;//เสียงบริการ (ที่ช่อง ที่ห้อง ที่โต๊ะ)
             $basePath = "/media/" . $modelSound['sound_path_name'];
-            $begin = [$basePath . "/please.wav"]; //เชิญหมายเลข
+            $hostname = Url::base(true);
+            $begin = [$hostname.$basePath . "/please.wav"]; //เชิญหมายเลข
             $end = [//ที่โต๊ะ 1 ค่ะ
-                "/media/" . $ServiceSound['sound_path_name'] . '/' . $ServiceSound['sound_name'],
-                $basePath . '/' . $modelSound['sound_name'],
-                $basePath . '/' . $modelSound['sound_path_name'] . '_Sir.wav',
+                $hostname."/media/" . $ServiceSound['sound_path_name'] . '/' . $ServiceSound['sound_name'],
+                $hostname.$basePath . '/' . $modelSound['sound_name'],
+                $hostname.$basePath . '/' . $modelSound['sound_path_name'] . '_Sir.wav',
             ];
 
-            $sound = array_map(function ($num) use ($basePath, $modelSound) {//A001
-                return $basePath . '/' . $modelSound['sound_path_name'] . '_' . $num . '.wav';
+            $sound = array_map(function ($num) use ($basePath, $modelSound, $hostname) {//A001
+                return $hostname.$basePath . '/' . $modelSound['sound_path_name'] . '_' . $num . '.wav';
             }, $txt_split);
             $sound = ArrayHelper::merge($begin, $sound);//[เชิญหมายเลข, A001]
             $sound = ArrayHelper::merge($sound, $end);// [เชิญหมายเลขA001, ที่โต๊ะ 1 ค่ะ]

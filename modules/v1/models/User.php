@@ -12,6 +12,7 @@ class User extends BaseUser
 
 	const ROLE_USER = 10;
     const ROLE_ADMIN = 20;
+    const ROLE_KIOSK = 30;
 
     public $excelFile;
 
@@ -120,7 +121,11 @@ class User extends BaseUser
 	{
 	    $user = static::findOne(['auth_key' => $token]);
 	    if($user){
-	        return $user;
+	        if($user->getIsBlocked() == true || $user->getIsConfirmed() == false) {
+				return null;
+			} else {
+				return $user;
+			}
         }
 		$secret = static::getSecretKey();
 		// Decode token and transform it into array.
@@ -182,9 +187,11 @@ class User extends BaseUser
     {
         if ($this->role == self::ROLE_ADMIN){
             return 'Admin';
-        }else{
-            return 'User';
-        }
+        } elseif ($this->role == self::ROLE_KIOSK){
+            return 'Kiosk';
+        } else {
+			return 'User';
+		}
     }
 
     public function upload()
@@ -195,5 +202,9 @@ class User extends BaseUser
         } else {
             return false;
         }
+	}
+	
+	public function getRole(){
+        return $this->role;
     }
 }

@@ -13,7 +13,7 @@ use yii\widgets\DetailView;
             'profile_service_id',
             'profile_service_name',
             'counter_id',
-            'dept_id:ntext',
+            //'service_id:ntext',
             'profile_service_status',
         ],
     ]) ?>

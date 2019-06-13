@@ -19,6 +19,7 @@ use yii\helpers\ArrayHelper;
  * @property int $print_copy_qty จำนวนพิมพ์/ครั้ง
  * @property int $dept_order ลำดับการแสดงผล
  * @property int $dept_status สถานะ
+ * @property int $room_type_id ประเภทการออกบัตรคิว
  */
 class TblDept extends \yii\db\ActiveRecord
 {
@@ -40,13 +41,12 @@ class TblDept extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['dept_id', 'dept_name', 'dept_group_id', 'dept_num_digit', 'prefix_id', 'prefix_running', 'dept_status'], 'required'],
-            [['dept_group_id', 'dept_num_digit', 'card_id', 'prefix_id', 'prefix_running', 'print_copy_qty', 'dept_order', 'dept_status'], 'integer'],
+            [['dept_id', 'dept_name', 'dept_group_id', 'dept_prefix', 'dept_num_digit', 'prefix_id', 'prefix_running', 'dept_status', 'room_type_id'], 'required'],
+            [['dept_group_id', 'dept_num_digit', 'card_id', 'prefix_id', 'prefix_running', 'print_copy_qty', 'dept_order', 'dept_status', 'room_type_id'], 'integer'],
             [['dept_id'], 'string', 'max' => 100],
             [['dept_name'], 'string', 'max' => 255],
             [['dept_prefix'], 'string', 'max' => 10],
             [['dept_id'], 'unique'],
-            [['order_dept'], 'safe'],
         ];
     }
 
@@ -67,6 +67,7 @@ class TblDept extends \yii\db\ActiveRecord
             'print_copy_qty' => 'จำนวนพิมพ์บัตรคิว/ครั้ง',
             'dept_order' => 'ลำดับการแสดงผล',
             'dept_status' => 'สถานะ',
+            'room_type_id' => 'ประเภทการออกบัตรคิว',
         ];
     }
 
@@ -86,6 +87,12 @@ class TblDept extends \yii\db\ActiveRecord
     public function getPrefix()
     {
         return $this->hasOne(TblPrefix::className(), ['prefix_id' => 'prefix_id']);
+    }
+
+    //
+    public function getRoomType()
+    {
+        return $this->hasOne(TblRoomType::className(), ['room_type_id' => 'room_type_id']);
     }
 
 

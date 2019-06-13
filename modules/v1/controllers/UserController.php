@@ -8,6 +8,7 @@ use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\helpers\Json;
 use yii\filters\auth\CompositeAuth;
+use yii\filters\auth\QueryParamAuth;
 use yii\filters\Cors;
 use yii\web\Response;
 use app\filters\auth\HttpBearerAuth;
@@ -22,6 +23,7 @@ use yii\helpers\FileHelper;
 use yii\helpers\ArrayHelper;
 use yii\widgets\ActiveForm;
 use yii\data\ActiveDataProvider;
+use app\filters\AccessRule;
 
 class UserController extends ActiveController
 {
@@ -52,6 +54,7 @@ class UserController extends ActiveController
             'class' => CompositeAuth::className(),
             'authMethods' => [
                 HttpBearerAuth::className(),
+                QueryParamAuth::className()
             ],
 
         ];
@@ -87,16 +90,37 @@ class UserController extends ActiveController
         // re-add authentication filter
         $behaviors['authenticator'] = $auth;
         // avoid authentication on CORS-pre-flight requests (HTTP OPTIONS method)
-        $behaviors['authenticator']['except'] = ['options', 'upload-avatar', 'pt-right'];
+        $behaviors['authenticator']['except'] = ['options', 'upload-avatar'];
         // setup access
         $behaviors['access'] = [
             'class' => AccessControl::className(),
-            'only' => ['index', 'view', 'create', 'update', 'delete'], //only be applied to
+            'only' => ['index', 'view', 'create', 'update', 'delete', 'pt-right', 'profile', 'account', 'delete-user'], //only be applied to
+            'ruleConfig' => [
+                'class' => AccessRule::className()
+            ],
             'rules' => [
                 [
                     'allow' => true,
-                    'actions' => ['index', 'view', 'create', 'update', 'delete', 'profile', 'account', 'delete-user'],
-                    'roles' => ['@'],
+                    'actions' => ['view', 'update', 'profile', 'account'],
+                    'roles' => [
+                        User::ROLE_ADMIN,
+                        USER::ROLE_USER,
+                        User::ROLE_KIOSK,
+                    ],
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['index', 'create', 'delete', 'delete-user'],
+                    'roles' => [User::ROLE_ADMIN]
+                ],
+                [
+                    'allow' => true,
+                    'actions' => ['pt-right'],
+                    'roles' => [
+                        User::ROLE_ADMIN,
+                        User::ROLE_KIOSK,
+                        USER::ROLE_USER
+                    ]
                 ],
             ],
         ];
@@ -245,7 +269,7 @@ class UserController extends ActiveController
     public function actionPtRight($cid)
     {
         $logger = Yii::$app->logger->getLogger();
-        /*$json = <<<JSON
+        /* $json = <<<JSON
     {
         "birthdate": "24860301",
         "cardid": "ท7730356386",
@@ -289,7 +313,7 @@ class UserController extends ActiveController
         "wsid_batch": "WSB00001203212584"
     }
 JSON;
-        return Json::decode($json);*/
+        return Json::decode($json); */
         $client = Yii::$app->nhso;
         $sql = "SELECT * FROM nhso_token ORDER BY updated_at DESC";
         $userToken = \Yii::$app->db2->createCommand($sql)->queryOne();
@@ -310,6 +334,9 @@ JSON;
         } else if (empty($data['fname'])) {
             $logger->info('pt-right', ['msg' => 'NOT FOUND IN NHSO', 'cid' => $cid, 'data' => $data]);
             throw new HttpException(422, 'NOT FOUND IN NHSO');
+        } elseif(!isset($data['maininscl']) || !isset($data['maininscl_name'])) {
+            $logger->info('pt-right', ['msg' => 'ไม่พบข้อมูลสิทธิการรักษา', 'cid' => $cid, 'data' => $data]);
+            throw new HttpException(422, 'ไม่พบข้อมูลสิทธิการรักษา');
         }
         return $data;
     }

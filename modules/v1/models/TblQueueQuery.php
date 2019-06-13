@@ -42,4 +42,9 @@ class TblQueueQuery extends \yii\db\ActiveQuery
     {
         return $this->andOnCondition(['dept_id' => $dept_code]);
     }
+
+    public function betweenCreateAt($startDate, $endDate)
+    {
+        return $this->andWhere(['between', 'created_at', $startDate, $endDate]);
+    }
 }

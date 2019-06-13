@@ -17,6 +17,13 @@ use app\modules\v1\models\TblQueueStatus;
 use app\modules\v1\models\TblSound;
 use app\modules\v1\models\TblSoundStation;
 use app\modules\v1\models\TblPrefix;
+use app\modules\v1\models\TblServiceGroup;
+use app\modules\v1\models\TblService;
+use app\modules\v1\models\TblQueueService;
+use app\modules\v1\models\TblPlayStation;
+use app\modules\v1\models\TblDisplay;
+use app\modules\v1\models\TblProfileService;
+use app\modules\v1\models\TblFloor;
 
 trait ModelTrait
 {
@@ -156,6 +163,69 @@ trait ModelTrait
             return $model;
         } else {
             $this->handleError(TblPrefix::className());
+        }
+    }
+
+    protected function findModelServiceGroup($id)
+    {
+        if (($model = TblServiceGroup::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(TblServiceGroup::className());
+        }
+    }
+
+    protected function findModelService($id)
+    {
+        if (($model = TblService::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(TblService::className());
+        }
+    }
+
+    protected function findModelQueueService($id)
+    {
+        if (($model = TblQueueService::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(TblQueueService::className());
+        }
+    }
+    // โปรแกรมเสียง
+    protected function findModelPlayStation($id)
+    {
+        if (($model = TblPlayStation::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(TblPlayStation::className());
+        }
+    }
+    // จอแสดงผล
+    protected function findModelDisplay($id)
+    {
+        if (($model = TblDisplay::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(TblDisplay::className());
+        }
+    }
+    // โปรไฟล์
+    protected function findModelProfileService($id)
+    {
+        if (($model = TblProfileService::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(TblProfileService::className());
+        }
+    }
+    // ชั้น
+    protected function findModelFloor($id)
+    {
+        if (($model = TblFloor::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(TblFloor::className());
         }
     }
 

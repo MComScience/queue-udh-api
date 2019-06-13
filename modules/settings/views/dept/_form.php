@@ -6,6 +6,7 @@ use yii\helpers\ArrayHelper;
 use app\modules\v1\models\TblDeptGroup;
 use app\modules\v1\models\TblCard;
 use app\modules\v1\models\TblPrefix;
+use app\modules\v1\models\TblRoomType;
 
 /* @var $this yii\web\View */
 /* @var $model app\modules\v1\models\TblDept */
@@ -51,6 +52,15 @@ use app\modules\v1\models\TblPrefix;
     <?= $form->field($model, 'card_id')->widget(Select2::classname(), [
         'data' => ArrayHelper::map(TblCard::find()->asArray()->all(), 'card_id', 'card_name'),
         'options' => ['placeholder' => 'เลือกแบบบัตรคิว...'],
+        'pluginOptions' => [
+            'allowClear' => true
+        ],
+        'theme' => Select2::THEME_BOOTSTRAP,
+    ]) ?>
+
+    <?= $form->field($model, 'room_type_id')->widget(Select2::classname(), [
+        'data' => ArrayHelper::map(TblRoomType::find()->asArray()->all(), 'room_type_id', 'room_type_name'),
+        'options' => ['placeholder' => 'เลือก...'],
         'pluginOptions' => [
             'allowClear' => true
         ],

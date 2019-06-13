@@ -14,7 +14,8 @@ use yii\helpers\Json;
  *
  * @property int $patient_id ไอดีผู้ป่วย
  * @property string $hn หมายเลขผู้ป่วย
- * @property int $cid เลขบัตร ปชช
+ * @property string $vn ครั้งที่มา
+ * @property string $cid เลขบัตร ปชช
  * @property string $title คำนำหน้า
  * @property string $firstname ชื่อ
  * @property string $lastname นามสกุล
@@ -26,6 +27,12 @@ use yii\helpers\Json;
  * @property string $address ที่อยู่
  * @property string $occ อาชีพ
  * @property string $appoint นัดหมาย
+ * @property string $maininscl_name สิทธิ
+ * @property string $subinscl_name สิทธิ
+ * @property string $created_at วันที่บันทึก
+ * @property string $updated_at วันที่แก้ไข
+ * @property int $created_by ผู้บันทึก
+ * @property int $updated_by ผู้แก้ไข
  */
 class TblPatient extends \yii\db\ActiveRecord
 {
@@ -77,7 +84,7 @@ class TblPatient extends \yii\db\ActiveRecord
             [['birth_date'], 'safe'],
             [['age'], 'integer'],
             [['appoint'], 'string'],
-            [['hn', 'title', 'nation'], 'string', 'max' => 50],
+            [['hn', 'vn', 'title', 'nation'], 'string', 'max' => 50],
             [['cid'], 'string', 'max' => 13],
             [['firstname', 'lastname', 'fullname', 'address', 'maininscl_name', 'subinscl_name'], 'string', 'max' => 255],
             [['blood_group'], 'string', 'max' => 10],
@@ -93,6 +100,7 @@ class TblPatient extends \yii\db\ActiveRecord
         return [
             'patient_id' => 'ไอดีผู้ป่วย',
             'hn' => 'หมายเลขผู้ป่วย',
+            'vn' => 'ครั้งที่มา',
             'cid' => 'เลขบัตร ปชช',
             'title' => 'คำนำหน้า',
             'firstname' => 'ชื่อ',
@@ -113,5 +121,10 @@ class TblPatient extends \yii\db\ActiveRecord
     public function getQueues()
     {
         return $this->hasMany(TblQueue::className(), ['patient_id' => 'patient_id']);
+    }
+
+    public static function find()
+    {
+        return new TblPatientQuery(get_called_class());
     }
 }

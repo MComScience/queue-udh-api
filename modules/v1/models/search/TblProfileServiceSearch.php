@@ -19,7 +19,7 @@ class TblProfileServiceSearch extends TblProfileService
     {
         return [
             [['profile_service_id', 'counter_id', 'profile_service_status'], 'integer'],
-            [['profile_service_name', 'dept_id'], 'safe'],
+            [['profile_service_name', 'service_id'], 'safe'],
         ];
     }
 
@@ -62,7 +62,7 @@ class TblProfileServiceSearch extends TblProfileService
         ]);
 
         $query->andFilterWhere(['like', 'profile_service_name', $this->profile_service_name])
-            ->andFilterWhere(['like', 'dept_id', $this->dept_id]);
+            ->andFilterWhere(['like', 'service_id', $this->service_id]);
 
         return $dataProvider;
     }

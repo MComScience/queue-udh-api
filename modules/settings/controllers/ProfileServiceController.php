@@ -4,6 +4,7 @@ namespace app\modules\settings\controllers;
 
 use Yii;
 use app\modules\v1\models\TblProfileService;
+use app\modules\v1\models\TblService;
 use app\modules\v1\models\search\TblProfileServiceSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -102,7 +103,8 @@ class ProfileServiceController extends Controller
                 ];         
             }else if($model->load($request->post())){
                 $data = $request->post('TblProfileService');
-                $model->dept_id = !empty($data['dept_id']) ? Json::encode($data['dept_id']) : null;
+                $model->service_id = !empty($data['service_id']) ? Json::encode($data['service_id']) : null;
+                $model->examination_id = !empty($data['examination_id']) ? Json::encode($data['examination_id']) : null;
                 if($model->save()){
                     return [
                         'forceReload'=>'#crud-datatable-pjax',
@@ -160,7 +162,8 @@ class ProfileServiceController extends Controller
     {
         $request = Yii::$app->request;
         $model = $this->findModel($id);
-        $model->dept_id = !empty($model['dept_id']) ? Json::decode($model['dept_id']) : [];       
+        $model->service_id = !empty($model['service_id']) ? Json::decode($model['service_id']) : [];       
+        $model->examination_id = !empty($model['examination_id']) ? Json::decode($model['examination_id']) : [];       
 
         if($request->isAjax){
             /*
@@ -178,7 +181,8 @@ class ProfileServiceController extends Controller
                 ];         
             }else if($model->load($request->post())){
                 $data = $request->post('TblProfileService');
-                $model->dept_id = !empty($data['dept_id']) ? Json::encode($data['dept_id']) : null;
+                $model->service_id = !empty($data['service_id']) ? Json::encode($data['service_id']) : null;
+                $model->examination_id = !empty($data['examination_id']) ? Json::encode($data['examination_id']) : null;
                 if($model->save()){
                     return [
                         'forceReload'=>'#crud-datatable-pjax',
@@ -297,5 +301,30 @@ class ProfileServiceController extends Controller
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
+    }
+
+    public function actionSubService($id) {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $out = [];
+        $list = (new \yii\db\Query())
+            ->select(['tbl_service.service_id', 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name'])
+            ->from('tbl_service')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+            ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
+            ->where([
+                'tbl_service.service_status' => 1,
+                'tbl_service_group.queue_service_id' => $id
+            ])
+            ->all();
+        $selected  = null;
+        if (count($list) > 0) {
+            $selected = '';
+            foreach ($list as $i => $data) {
+                $out[] = ['id' => $data['service_id'], 'text' => $data['service_name']];
+            }
+            // Shows how you can preselect a value
+            return ['output' => $out, 'selected' => ''];
+        }
+        return ['output' => '', 'selected' => ''];
     }
 }

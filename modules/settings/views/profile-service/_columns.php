@@ -27,9 +27,17 @@ return [
     ],
     [
         'class'=>'\kartik\grid\DataColumn',
-        'attribute'=>'dept_id',
+        'attribute'=>'service_id',
         'value' => function($model){
-            return $model->getDeptList();
+            return $model->getServiceList();
+        },
+        'format' => 'html'
+    ],
+    [
+        'class'=>'\kartik\grid\DataColumn',
+        'attribute'=>'examination_id',
+        'value' => function($model){
+            return $model->getExaminationList();
         },
         'format' => 'html'
     ],

@@ -102,7 +102,7 @@ class KioskController extends Controller
                 ];
             } else if ($model->load($request->post())) {
                 $data = $request->post('TblKiosk');
-                $model->departments = !empty($data['departments']) ? Json::encode($data['departments']) : '';
+                $model->service_groups = !empty($data['service_groups']) ? Json::encode($data['service_groups']) : '';
                 if ($model->save()) {
                     return [
                         'forceReload' => '#crud-datatable-pjax',
@@ -160,7 +160,7 @@ class KioskController extends Controller
     {
         $request = Yii::$app->request;
         $model = $this->findModel($id);
-        $model->departments = !empty($model->departments) ? Json::decode($model['departments']) : [];
+        $model->service_groups = !empty($model->service_groups) ? Json::decode($model['service_groups']) : [];
 
         if ($request->isAjax) {
             /*
@@ -178,7 +178,7 @@ class KioskController extends Controller
                 ];
             } else if ($model->load($request->post())) {
                 $data = $request->post('TblKiosk');
-                $model->departments = !empty($data['departments']) ? Json::encode($data['departments']) : '';
+                $model->service_groups = !empty($data['service_groups']) ? Json::encode($data['service_groups']) : '';
                 if ($model->save()) {
                     return [
                         'forceReload' => '#crud-datatable-pjax',

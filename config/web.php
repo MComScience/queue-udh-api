@@ -15,6 +15,7 @@ $config = [
         '@bower' => '@vendor/bower-asset',
         '@npm' => '@vendor/npm-asset',
         '@Mpdf' => '@app/lib/mpdf/src',
+        '@common' => '@app/common',
     ],
     'name' => 'QUEUE UDON HOSPITAL',
     # ตั้งค่าการใช้งานภาษาไทย (Language)
@@ -30,8 +31,8 @@ $config = [
             'disabledCommands' => ['netmount'],
             'roots' => [
                 [
-                    'baseUrl'=>'@web',
-                    'basePath'=>'@webroot',
+                    'baseUrl' => '@web',
+                    'basePath' => '@webroot',
                     'path' => '/',
                     'access' => ['read' => 'Admin', 'write' => 'Admin']
                 ]
@@ -48,16 +49,16 @@ $config = [
             'baseUrl' => $baseUrl,
         ],
         'authManager' => [
-            'class' => 'yii\rbac\DbManager',
+            'class' => 'yii\rbac\PhpManager',
         ],
         'cache' => [
-            'class' => 'yii\caching\FileCache',
-            /* 'class' => 'yii\redis\Cache',
-            'redis' => 'redis' */
+            // 'class' => 'yii\caching\FileCache',
+            'class' => 'yii\redis\Cache',
+            'redis' => 'redis'
         ],
         'redis' => [
             'class' => 'yii\redis\Connection',
-            'hostname' => 'redis',
+            'hostname' => '127.0.0.1',
             'port' => 6379,
             'database' => 0,
         ],
@@ -90,17 +91,17 @@ $config = [
                     'class' => 'yii\log\DbTarget',
                     'levels' => ['error', 'warning'],
                 ],
-                [
+                /* [
                     'class' => 'yii\log\EmailTarget',
                     'mailer' => 'mailer',
                     'levels' => ['error'],
                     'categories' => ['yii\db\*'],
                     'message' => [
-                       'from' => ['andamandev888@gmail.com'],
-                       'to' => ['mcomsciencermu@gmail.com'],
-                       'subject' => 'Log error ระบบคิว รพ อุดรธานี',
+                        'from' => ['andamandev888@gmail.com'],
+                        'to' => ['mcomsciencermu@gmail.com'],
+                        'subject' => 'Log error ระบบคิว รพ อุดรธานี',
                     ],
-                ],
+                ], */
             ],
         ],
         'db' => $db,
@@ -136,11 +137,15 @@ $config = [
                     $responseData = json_decode($responseData, true);
                 }
                 if ($response->statusCode >= 200 && $response->statusCode <= 299) {
-                    $response->data = [
-                        'success' => true,
-                        'status' => $response->statusCode,
-                        'data' => $responseData,
-                    ];
+                    if (isset($responseData['output'])) {
+                        $response->data = $responseData;
+                    } else {
+                        $response->data = [
+                            'success' => true,
+                            'status' => $response->statusCode,
+                            'data' => $responseData,
+                        ];
+                    }
                 } else {
                     $response->data = [
                         'success' => false,
@@ -176,9 +181,9 @@ $config = [
         ],
         'db2' => [
             'class' => 'yii\db\Connection',
-            'dsn' => 'mysql:host=db;dbname=api_udh;port=3306',
+            'dsn' => 'mysql:host=localhost;dbname=api_udh;port=3307',
             'username' => 'root',
-            'password' => 'root_db',
+            'password' => '',
             'charset' => 'utf8',
         ],
         'logger' => [
@@ -193,6 +198,9 @@ $config = [
             'sourcePath' => '@app/web/uploads',
             'cachePath' => '@runtime/glide',
             'signKey' => false // "false" if you do not want to use HTTP signatures
+        ],
+        'keyStorage' => [
+            'class' => '\common\components\keystorage\KeyStorage',
         ],
     ],
     'modules' => [
@@ -229,6 +237,16 @@ $config = [
         'file' => [
             'class' => 'app\modules\file\Module',
         ],
+        'system' => [
+            'class' => 'common\modules\system\Module',
+        ],
+        'audit' => [
+            'class' => 'bedezign\yii2\audit\Audit',
+            'accessRoles' => ['@'],
+            'userIdentifierCallback' => ['app\modules\v1\models\User'],
+            'ignoreActions' => ['audit/*', 'debug/*', 'site/*'],
+            'maxAge' => 7
+        ]
     ],
     'params' => $params,
 ];

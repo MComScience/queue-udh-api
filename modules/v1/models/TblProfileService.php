@@ -12,7 +12,9 @@ use yii\helpers\Html;
  * @property int $profile_service_id รหัส
  * @property string $profile_service_name ชื่อโปรไฟล์
  * @property int $counter_id เคาท์เตอร์
- * @property string $dept_id แผนก
+ * @property string $service_id ชื่อบริการ
+ * @property string $examination_id ห้องตรวจ
+ * @property int $queue_service_id ประเภทคิวบริการ
  * @property int $profile_service_status สถานะ
  */
 class TblProfileService extends \yii\db\ActiveRecord
@@ -33,9 +35,9 @@ class TblProfileService extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['profile_service_name', 'counter_id', 'dept_id', 'profile_service_status'], 'required'],
-            [['counter_id', 'profile_service_status'], 'integer'],
-            [['dept_id'], 'safe'],
+            [['profile_service_name', 'counter_id', 'service_id', 'queue_service_id', 'profile_service_status'], 'required'],
+            [['counter_id', 'queue_service_id', 'profile_service_status'], 'integer'],
+            [['service_id', 'examination_id'], 'safe'],
             [['profile_service_name'], 'string', 'max' => 100],
         ];
     }
@@ -49,7 +51,9 @@ class TblProfileService extends \yii\db\ActiveRecord
             'profile_service_id' => 'รหัส',
             'profile_service_name' => 'ชื่อโปรไฟล์',
             'counter_id' => 'เคาน์เตอร์',
-            'dept_id' => 'แผนก',
+            'service_id' => 'ชื่อบริการ',
+            'examination_id' => 'ห้องตรวจ',
+            'queue_service_id' => 'ประเภทคิวบริการ',
             'profile_service_status' => 'สถานะ',
         ];
     }
@@ -84,15 +88,32 @@ class TblProfileService extends \yii\db\ActiveRecord
         return $this->hasOne(TblCounter::className(), ['counter_id' => 'counter_id']);
     }
 
-    public function getDeptList()
+    public function getServiceList()
     {
-        if($this->dept_id){
-            $depts = TblDept::find()->where(['dept_id' => Json::decode($this->dept_id)])->all();
+        if($this->service_id){
+            $services = TblService::find()->where(['service_id' => Json::decode($this->service_id)])->all();
             $li = [];
-            foreach ($depts as $key => $dept) {
-                $li[] = Html::tag('li', $dept['dept_name']);
+            foreach ($services as $key => $service) {
+                $li[] = Html::tag('li', $service['service_name']);
             }
             return Html::tag('ol', implode("\n", $li));
         }
+    }
+
+    public function getExaminationList()
+    {
+        if($this->examination_id){
+            $services = TblService::find()->where(['service_id' => Json::decode($this->examination_id)])->all();
+            $li = [];
+            foreach ($services as $key => $service) {
+                $li[] = Html::tag('li', $service['service_name']);
+            }
+            return Html::tag('ol', implode("\n", $li));
+        }
+    }
+
+    public function getQueueService()
+    {
+        return $this->hasOne(TblQueueService::className(), ['queue_service_id' => 'queue_service_id']);
     }
 }
