@@ -43,7 +43,7 @@ AppAsset::register($this);
             ['label' => 'ผู้ใช้งาน', 'url' => ['/user/admin/index'], 'visible' => !Yii::$app->user->isGuest],
             ['label' => 'จัดการไฟล์', 'url' => ['/file/manager/index'], 'visible' => !Yii::$app->user->isGuest],
             ['label' => 'Runtime', 'url' => ['/file/manager/runtime'], 'visible' => !Yii::$app->user->isGuest],
-            [
+            /* [
                 'label' => 'ตั้งค่า',
                 'items' => [
                     ['label' => 'ตัวอักษรหน้าเลขคิว', 'url' => '/settings/prefix/index'],
@@ -62,7 +62,7 @@ AppAsset::register($this);
                     ['label' => 'AutoNumber', 'url' => '/settings/auto-number/index'],
                 ],
                 'visible' => !Yii::$app->user->isGuest
-            ],
+            ], */
             //['label' => 'Contact', 'url' => ['/site/contact']],
             Yii::$app->user->isGuest ? (
             ['label' => 'เข้าสู่ระบบ', 'url' => ['/auth/login']]
