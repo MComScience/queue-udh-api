@@ -247,7 +247,7 @@ for (x = 0; x < i; x++) {
         margin: 0
     });
 }
-
+$('p[data-f-id="pbf"]').remove()
 $(window).on('load', function() {
     window.print();
     window.onafterprint = function(){
