@@ -181,9 +181,9 @@ $config = [
         ],
         'db2' => [
             'class' => 'yii\db\Connection',
-            'dsn' => 'mysql:host=localhost;dbname=api_udh;port=3307',
+            'dsn' => 'mysql:host=db;dbname=api_udh;port=3306',
             'username' => 'root',
-            'password' => '',
+            'password' => 'root_db',
             'charset' => 'utf8',
         ],
         'logger' => [
@@ -245,7 +245,7 @@ $config = [
             'accessRoles' => ['@'],
             'userIdentifierCallback' => ['app\modules\v1\models\User'],
             'ignoreActions' => ['audit/*', 'debug/*', 'site/*'],
-            'maxAge' => 7
+            'maxAge' => 30
         ]
     ],
     'params' => $params,

@@ -18,6 +18,7 @@ use yii\helpers\ArrayHelper;
  * @property string $call_time เวลาเรียก
  * @property string $hold_time เวลาพักคิว
  * @property string $end_time เวลาเสร็จสิ้น
+ * @property string $group_key กลุ่มคิว
  * @property string $created_at วันที่บันทึก
  * @property string $updated_at วันที่แก้ไข
  * @property int $created_by ผู้บันทึก
@@ -62,6 +63,7 @@ class TblCaller extends \yii\db\ActiveRecord
             [['queue_id', 'counter_id', 'counter_service_id', 'profile_service_id'], 'required'],
             [['queue_id', 'counter_id', 'counter_service_id', 'profile_service_id', 'created_by', 'updated_by', 'caller_status'], 'integer'],
             [['call_time', 'hold_time', 'end_time', 'created_at', 'updated_at'], 'safe'],
+            [['group_key'], 'string', 'max' => 255],
         ];
     }
 
@@ -79,6 +81,7 @@ class TblCaller extends \yii\db\ActiveRecord
             'call_time' => 'เวลาเรียก',
             'hold_time' => 'เวลาพักคิว',
             'end_time' => 'เวลาเสร็จสิ้น',
+            'group_key' => 'กลุ่มคิว',
             'created_at' => 'วันที่บันทึก',
             'updated_at' => 'วันที่แก้ไข',
             'created_by' => 'ผู้บันทึก',
@@ -134,5 +137,19 @@ class TblCaller extends \yii\db\ActiveRecord
     {
         $statusList = $this->getAllStatus();
         return ArrayHelper::getValue($statusList,$this->caller_status, '');
+    }
+
+    public function getGroupKey()
+    {
+        return \Yii::$app->security->generateRandomString();
+    }
+
+     /**
+     * {@inheritdoc}
+     * @return TblCallerQuery the active query used by this AR class.
+     */
+    public static function find()
+    {
+        return new TblCallerQuery(get_called_class());
     }
 }

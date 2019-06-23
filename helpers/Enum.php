@@ -24,6 +24,11 @@ class Enum extends Inflector
         return Enum::formatter()->asDate('now', 'php:Y-m-d 23:59:59');
     }
 
+    public static function currentDate($format = 'php:Y-m-d H:i:s')
+    {
+        return Enum::formatter()->asDate('now', $format);
+    }
+
     public static function formatter()
     {
         return Yii::$app->formatter;

@@ -31,6 +31,7 @@ $config = [
         'user' => [
             'class' => 'dektrium\user\Module',
         ],
+        'audit' => 'bedezign\yii2\audit\Audit',
     ],
     'params' => $params,
     /*

@@ -12,7 +12,10 @@ use app\models\ContactForm;
 use yii\helpers\Json;
 use app\modules\v1\traits\ModelTrait;
 use yii\httpclient\Client;
+use app\modules\v1\models\TblQueue;
 use app\modules\v1\models\TblQueueFailed;
+use app\modules\v1\models\TblService;
+use yii\web\NotFoundHttpException;
 
 class SiteController extends Controller
 {
@@ -213,6 +216,8 @@ class SiteController extends Controller
         $modelCard = $this->findModelCard($service['card_id']);
         $card_template = strtr($modelCard['card_template'],[
             '{hn}' => $modelPatient['hn'],
+            '{vn}' => $modelPatient['vn'],
+            '{cid}' => $modelPatient['cid'],
             '{number}' => $model['queue_no'], // เลขคิว
             '{dept_name}' => $service['service_name'], // แผนก
             '{message_right}' => $modelPatient['maininscl_name'], // ชื่อสิทธิ
@@ -299,4 +304,111 @@ class SiteController extends Controller
             ]);
         }
     }
+
+    /* public function actionImportData()
+    {
+        $rows = Yii::$app->db3->createCommand('SELECT * FROM tbl_queue WHERE tbl_queue.queue_id > 57638 ORDER BY tbl_queue.queue_id ASC LIMIT 2000')->queryAll();
+        $count = 0;
+        $no_service = [];
+        $last_id = 0;
+        $db = Yii::$app->db;
+        $transaction = $db->beginTransaction();
+        try {
+            foreach ($rows as $key => $row) {
+                $service = TblService::findOne(['service_code' => $row['dept_id']]);
+                if(!$service) {
+                    $no_service[] = [
+                        'dept_id' => $row['dept_id'],
+                        'index' => $key
+                    ];
+                    // throw new NotFoundHttpException('no data service. '.$row['dept_id']. ' #key '. $key);
+                } else {
+                    $db->createCommand()->insert('tbl_queue', [
+                        'queue_id' => $row['queue_id'],
+                        'queue_no' => $row['queue_no'],
+                        'patient_id' => $row['patient_id'],
+                        'service_group_id' => $service['service_group_id'],
+                        'service_id' => $service['service_id'],
+                        'priority_id' => $row['priority_id'],
+                        'queue_station' => $row['queue_station'],
+                        'case_patient' => $row['case_patient'],
+                        'queue_status_id' => $row['queue_status_id'],
+                        'appoint' => 0,
+                        'parent_id' => '',
+                        'created_at' => $row['created_at'],
+                        'updated_at' => $row['updated_at'],
+                        'created_by' => $row['created_by'],
+                        'updated_by' => $row['updated_by'],
+                    ])->execute();
+                    $count++;
+                    $last_id = $row['queue_id'];
+                }
+            }
+            
+            $transaction->commit();
+
+            return Json::encode([
+                'success' => $count,
+                'no_service' => $no_service,
+                'last_id' => $last_id
+            ]);
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+    }
+
+    public function actionImportData2()
+    {
+        $rows = Yii::$app->db3->createCommand('SELECT * FROM tbl_patient WHERE tbl_patient.patient_id > 57119 ORDER BY tbl_patient.patient_id ASC LIMIT 5000')->queryAll();
+        $count = 0;
+        $last_id = 0;
+        $db = Yii::$app->db;
+        $transaction = $db->beginTransaction();
+        try {
+            foreach ($rows as $key => $row) {
+                $db->createCommand()->insert('tbl_patient', [
+                    'patient_id' => $row['patient_id'],
+                    'hn' => $row['hn'],
+                    'vn' => '',
+                    'cid' => $row['cid'],
+                    'title' => $row['title'],
+                    'firstname' => $row['firstname'],
+                    'lastname' => $row['lastname'],
+                    'fullname' => $row['fullname'],
+                    'birth_date' => $row['birth_date'],
+                    'age' => $row['age'],
+                    'blood_group' => $row['blood_group'],
+                    'nation' => $row['nation'],
+                    'address' => $row['address'],
+                    'occ' => $row['occ'],
+                    'appoint' => $row['appoint'],
+                    'maininscl_name' => $row['maininscl_name'],
+                    'subinscl_name' => $row['subinscl_name'],
+                    'created_at' => $row['created_at'],
+                    'updated_at' => $row['updated_at'],
+                    'created_by' => $row['created_by'],
+                    'updated_by' => $row['updated_by'],
+                ])->execute();
+                $count++;
+                $last_id = $row['patient_id'];
+            }
+            
+            $transaction->commit();
+
+            return Json::encode([
+                'success' => $count,
+                'last_id' => $last_id
+            ]);
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+    } */
 }

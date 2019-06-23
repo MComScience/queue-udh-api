@@ -351,7 +351,7 @@ class QueueController extends ActiveController
             $modelStorage->size = filesize($filepath);
             $modelStorage->name = $security;
             $modelStorage->ref_id = $patient_id;
-            $modelStorage->created_at = Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s');
+            $modelStorage->created_at = Enum::currentDate();
             if ($modelStorage->save()) {
                 return $modelStorage;
             }
@@ -639,14 +639,14 @@ class QueueController extends ActiveController
             $counter = $this->findModelCounter($profile['counter_id']); // เคาน์เตอร์
             $services = TblService::find()->where(['service_id' => Json::decode($profile['service_id'])])->all();
             $examinations = TblService::find()->where(['service_id' => Json::decode($profile['examination_id'])])->all();
-            $counterServices = ArrayHelper::map(TblCounterService::find()->where(['counter_id' => $profile['counter_id']])->asArray()->all(), 'counter_service_id', 'counter_service_name');
-            $counterServiceOptions = [];
+            $counterServiceOptions = ArrayHelper::map(TblCounterService::find()->where(['counter_id' => $profile['counter_id']])->asArray()->all(), 'counter_service_id', 'counter_service_name');
+            /* $counterServiceOptions = [];
             foreach ($counterServices as $k => $value) {
                 $counterServiceOptions[] = [
                     'key' => $k,
                     'value' => $value
                 ];
-            }
+            } */
             $response[] = [
                 'profile' => [
                     'counter_id' => $profile['counter_id'],
@@ -755,11 +755,13 @@ class QueueController extends ActiveController
             'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
             'profile_service_id' => $params['profileService']['profile_service_id'], // โปรไฟล์เซอร์วิส
-            'call_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาเรียก
+            'call_time' => Enum::currentDate(), // เวลาเรียก
+            'group_key' => $modelCall->getGroupKey(), // กลุ่มคิว
             'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
         if ($modelCall->save() && $modelQueue->save()) {
+            $callers = AppQuery::getCallerByGroupkey($modelCall['group_key']);
             $queue = ArrayHelper::merge($params['queue'], [
                 'queue_status_id' => TblQueue::STATUS_CALL,
                 'counter_id' => $modelCall['counter_id'],
@@ -778,7 +780,8 @@ class QueueController extends ActiveController
                 'event_on' => 'tbl_wait',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
-                'service' => $modelService
+                'service' => $modelService,
+                'call_groups' => ArrayHelper::getColumn($callers, 'queue_no')
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -792,6 +795,11 @@ class QueueController extends ActiveController
         $params = \Yii::$app->getRequest()->getBodyParams();
         $queues = $params['queues'];
         $modelCounterService = $this->findModelCounterService($params['counter_service']['key']);
+        $groupKey = \Yii::$app->security->generateRandomString();
+        $group_queue_no = [];
+        foreach ($queues as $key => $queue) {
+            $group_queue_no[] = $queue['queue_no'];
+        }
         $transaction = TblCaller::getDb()->beginTransaction();
         try {
             foreach ($queues as $key => $queue) {
@@ -807,8 +815,9 @@ class QueueController extends ActiveController
                     'queue_id' => $queue['queue_id'], // รหัสคิว
                     'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
                     'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
-                    'call_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาเรียก
+                    'call_time' => Enum::currentDate(), // เวลาเรียก
                     'profile_service_id' => $params['profileService']['profile_service_id'], // โปรไฟล์เซอร์วิส
+                    'group_key' => $groupKey, // กลุ่มคิว
                     'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
                 ]);
                 $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
@@ -823,7 +832,7 @@ class QueueController extends ActiveController
                     $response[] = [
                         'counter' => $params['counter'],
                         'counter_service' => $params['counter_service'],
-                        'profile_service' => $params['profile_service'],
+                        'profile_service' => $params['profileService'],
                         'queue' => $queue,
                         'sources' => [
                             'urls' => $this->getSourceMediaFiles($modelQueue['queue_no'], $params['counter_service']['key']),
@@ -834,7 +843,8 @@ class QueueController extends ActiveController
                         'event_on' => 'tbl_wait',
                         'caller' => $modelCall,
                         'group' => $modelServiceGroup,
-                        'service' => $modelService
+                        'service' => $modelService,
+                        'call_groups' => $group_queue_no
                     ];
                 } else {
                     $transaction->rollBack();
@@ -869,9 +879,11 @@ class QueueController extends ActiveController
         $modelCall->setAttributes([
             'queue_id' => $params['queue']['queue_id'], // รหัสคิว
             'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+            'profile_service_id' => $params['profileService']['profile_service_id'], // โปรไฟล์เซอร์วิส
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
-            'call_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาเรียก
-            'end_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาเสร็จสิ้น
+            'call_time' => Enum::currentDate(), // เวลาเรียก
+            'end_time' => Enum::currentDate(), // เวลาเสร็จสิ้น
+            'group_key' => $modelCall->getGroupKey(), // กลุ่มคิว
             'caller_status' => TblCaller::STATUS_CALL_END // 1
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
@@ -904,11 +916,12 @@ class QueueController extends ActiveController
             'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
             'profile_service_id' => $params['profileService']['profile_service_id'], // โปรไฟล์เซอร์วิส
-            'call_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาเรียก
+            'call_time' => Enum::currentDate(), // เวลาเรียก
             'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
         if ($modelCall->save() && $modelQueue->save()) {
+            $callers = AppQuery::getCallerByGroupkey($modelCall['group_key']);
             $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
             $params['queue']['counter_id'] = $modelCall['counter_id'];
             $params['queue']['counter_service_id'] = $modelCall['counter_service_id'];
@@ -926,7 +939,8 @@ class QueueController extends ActiveController
                 'event_on' => 'tbl_caller',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
-                'service' => $modelService
+                'service' => $modelService,
+                'call_groups' => ArrayHelper::getColumn($callers, 'queue_no')
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -945,7 +959,7 @@ class QueueController extends ActiveController
         $modelCall->setAttributes([
             'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
-            'hold_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาพักคิว
+            'hold_time' => Enum::currentDate(), // เวลาพักคิว
             'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_HOLD;
@@ -980,7 +994,7 @@ class QueueController extends ActiveController
         $modelCall->setAttributes([
             'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
-            'end_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาเรียก
+            'end_time' => Enum::currentDate(), // เวลาเรียก
             'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
@@ -1016,11 +1030,12 @@ class QueueController extends ActiveController
             'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
             'profile_service_id' => $params['profileService']['profile_service_id'], // โปรไฟล์เซอร์วิส
-            'call_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาเรียก
+            'call_time' => Enum::currentDate(), // เวลาเรียก
             'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
         if ($modelCall->save() && $modelQueue->save()) {
+            $callers = AppQuery::getCallerByGroupkey($modelCall['group_key']);
             $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
             $params['queue']['call_time'] = $modelCall['call_time'];
             $params['queue']['counter_id'] = $modelCall['counter_id'];
@@ -1038,7 +1053,8 @@ class QueueController extends ActiveController
                 'event_on' => 'tbl_hold',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
-                'service' => $modelService
+                'service' => $modelService,
+                'call_groups' => ArrayHelper::getColumn($callers, 'queue_no')
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -1057,7 +1073,7 @@ class QueueController extends ActiveController
         $modelCall->setAttributes([
             'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
             'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
-            'end_time' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s'), // เวลาเรียก
+            'end_time' => Enum::currentDate(), // เวลาเรียก
             'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
@@ -1162,7 +1178,7 @@ class QueueController extends ActiveController
                     $modelStorage->id = null;
                     $modelStorage->isNewRecord = true;
                     $modelStorage->ref_id = $modelPatient['patient_id'];
-                    $modelStorage->created_at = Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s');
+                    $modelStorage->created_at = Enum::currentDate();
                     $modelStorage->save(false);
                 }
                 // ข้อมูลคิว
@@ -1294,7 +1310,7 @@ class QueueController extends ActiveController
     public function actionGetPlayStation($id)
     {
         $playStation = $this->findModelPlayStation($id);
-        $playStation->last_active_date = Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s');
+        $playStation->last_active_date = Enum::currentDate();
         $playStation->save();
         $counterIds = !empty($playStation['counter_id']) ? unserialize($playStation['counter_id']) : [];
         $counterServiceIds = !empty($playStation['counter_service_id']) ? unserialize($playStation['counter_service_id']) : [];
@@ -1326,7 +1342,7 @@ class QueueController extends ActiveController
         try {
             Yii::$app->db->createCommand()->update('tbl_caller', [
                 'caller_status' => TblCaller::STATUS_CALL_END, // เรียกเสร็จ
-                'updated_at' => Yii::$app->formatter->asDate('now', 'php:Y-m-d H:i:s')
+                'updated_at' => Enum::currentDate()
             ],
             [
                 'caller_id' => $params['caller_id']

@@ -24,6 +24,7 @@ use app\modules\v1\models\TblPlayStation;
 use app\modules\v1\models\TblDisplay;
 use app\modules\v1\models\TblProfileService;
 use app\modules\v1\models\TblFloor;
+use app\modules\v1\models\AutoNumber;
 
 trait ModelTrait
 {
@@ -226,6 +227,15 @@ trait ModelTrait
             return $model;
         } else {
             $this->handleError(TblFloor::className());
+        }
+    }
+
+    protected function findModelAutoNumber($id)
+    {
+        if (($model = AutoNumber::findOne($id)) !== null) {
+            return $model;
+        } else {
+            $this->handleError(AutoNumber::className());
         }
     }
 

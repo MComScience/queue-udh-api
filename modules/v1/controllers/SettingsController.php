@@ -22,6 +22,13 @@ use app\modules\v1\models\TblQueueService;
 use app\modules\v1\models\TblServiceGroup;
 use app\modules\v1\models\TblService;
 use app\modules\v1\models\TblKiosk;
+use app\modules\v1\models\TblCard;
+use app\modules\v1\models\TblProfileService;
+use app\modules\v1\models\TblCounter;
+use app\modules\v1\models\TblCounterService;
+use app\modules\v1\models\TblSound;
+use app\modules\v1\models\TblPlayStation;
+use app\modules\v1\models\TblDisplay;
 
 class SettingsController extends ActiveController
 {
@@ -86,6 +93,36 @@ class SettingsController extends ActiveController
                 'create-kiosk' => ['POST'],
                 'update-kiosk' => ['POST'],
                 'delete-kiosk' => ['DELETE'],
+                'card-list' => ['GET'],
+                'create-card' => ['POST'],
+                'update-card' => ['POST', 'GET'],
+                'delete-card' => ['DELETE'],
+                'profile-service-list' => ['GET'],
+                'profile-service-options' => ['GET'],
+                'create-profile-service' => ['PUT', 'POST'],
+                'update-profile-service' => ['GET', 'POST'],
+                'delete-profile-service' => ['DELETE'],
+                'counter-list' => ['GET'],
+                'create-counter' => ['PUT', 'POST'],
+                'update-counter' => ['POST'],
+                'delete-counter' => ['DELETE'],
+                'counter-service-list' => ['GET'],
+                'create-counter-service' => ['PUT', 'POST'],
+                'update-counter-service' => ['POST'],
+                'delete-counter-service' => ['DELETE'],
+                'counter-service-options' => ['GET'],
+                'play-station-list' => ['GET'],
+                'create-play-station' => ['PUT', 'POST'],
+                'update-play-station' => ['POST'],
+                'delete-play-station' => ['DELETE'],
+                'play-station-options' => ['GET'],
+                'display-list' => ['GET'],
+                'display-options' => ['GET'],
+                'create-display' => ['PUT', 'POST'],
+                'update-display' => ['GET', 'POST'],
+                'delete-display' => ['DELETE'],
+                'auto-number-list' => ['GET'],
+                'update-auto-number' => ['POST']
             ],
         ];
         // remove authentication filter
@@ -121,12 +158,21 @@ class SettingsController extends ActiveController
                         'index', 'view', 'create', 'update', 'floor-list', 'create-floor', 'update-floor',
                         'service-group-list', 'service-group-options', 'create-service-group', 'update-service-group',
                         'save-service-group-order', 'service-list', 'service-options', 'create-service', 'update-service',
-                        'save-service-order', 'kiosk-list', 'kiosk-options', 'create-kiosk', 'update-kiosk'
+                        'save-service-order', 'kiosk-list', 'kiosk-options', 'create-kiosk', 'update-kiosk', 'card-list',
+                        'create-card', 'update-card', 'profile-service-list', 'profile-service-options', 'create-profile-service',
+                        'update-profile-service', 'counter-list', 'create-counter', 'update-counter', 'counter-service-list',
+                        'create-counter-service', 'update-counter-service', 'counter-service-options', 'play-station-list',
+                        'create-play-station', 'update-play-station', 'play-station-options', 'display-list', 'display-options',
+                        'create-display', 'update-display', 'auto-number-list', 'update-auto-number'
                     ],
                     'roles' => ['@'],
                 ],
                 [
-                    'actions' => ['delete', 'delete-floor', 'delete-service-group', 'delete-service', 'delete-kiosk'],
+                    'actions' => [
+                        'delete', 'delete-floor', 'delete-service-group', 'delete-service', 'delete-kiosk',
+                        'delete-card', 'delete-profile-service', 'delete-counter', 'delete-counter-service',
+                        'delete-play-station', 'delete-display'
+                    ],
                     'allow' => true,
                     'roles' => [User::ROLE_ADMIN]
                 ]
@@ -194,11 +240,11 @@ class SettingsController extends ActiveController
     public function actionServiceGroupOptions()
     {
         
-        $floors = AppQuery::getFloorOptions();
-        $floorOptions = $this->mapDataOptions($floors);
+        $floorOptions = AppQuery::getFloorOptions();
+        // $floorOptions = $this->mapDataOptions($floors);
 
-        $queueServices = AppQuery::getQueueServiceOptions();
-        $queueServiceOptions = $this->mapDataOptions($queueServices);
+        $queueServiceOptions = AppQuery::getQueueServiceOptions();
+        // $queueServiceOptions = $this->mapDataOptions($queueServices);
         return [
             'floorOptions' => $floorOptions,
             'queueServiceOptions' => $queueServiceOptions
@@ -273,14 +319,14 @@ class SettingsController extends ActiveController
     // ตัวเลือก หน้าบันทึกชื่อบริการ
     public function actionServiceOptions()
     {
-        $serviceGroups = AppQuery::getServiceGroupOptions();
-        $serviceGroupOptions = $this->mapDataOptions($serviceGroups);
+        $serviceGroupOptions = AppQuery::getServiceGroupOptions();
+        // $serviceGroupOptions = $this->mapDataOptions($serviceGroups);
 
-        $prefixs = AppQuery::getPrefixOptions();
-        $prefixOptions =  $this->mapDataOptions($prefixs);
+        $prefixOptions = AppQuery::getPrefixOptions();
+        // $prefixOptions =  $this->mapDataOptions($prefixs);
 
-        $cards = AppQuery::getCardOptions();
-        $cardOptions = $this->mapDataOptions($cards);
+        $cardOptions = AppQuery::getCardOptions();
+        // $cardOptions = $this->mapDataOptions($cards);
 
         $statusOptions = AppQuery::getStatusOptions();
         return [
@@ -378,8 +424,8 @@ class SettingsController extends ActiveController
         $serviceGroups = AppQuery::getServiceGroupOptions();
         $serviceGroupOptions = $this->mapDataOptions($serviceGroups);
 
-        $userKioks = AppQuery::getUserKioskOptions();
-        $userKioskOptions = $this->mapDataOptions($userKioks);
+        $userKioskOptions = AppQuery::getUserKioskOptions();
+        // $userKioskOptions = $this->mapDataOptions($userKioks);
 
         return [
             'serviceGroupOptions' => $serviceGroupOptions,
@@ -432,12 +478,526 @@ class SettingsController extends ActiveController
         ];
     }
 
+    // รายการ บัตรคิว
+    public function actionCardList()
+    {
+        return TblCard::find()->all();
+    }
+
+    // สร้างรายการ บัตรคิว
+    public function actionCreateCard()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = new TblCard();
+        $model->load($params, '');
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // แก้ไขรายกากร บัตรคิว
+    public function actionUpdateCard($id)
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = $this->findModelCard($id);
+        if(Yii::$app->request->isGet) {
+            return [
+                'model' => $model
+            ];
+        } else {
+            $model->load($params, '');
+            if($model->validate() && $model->save()) {
+                return [
+                    'message' => 'บันทึกสำเร็จ!',
+                    'model' => $model
+                ];
+            } else {
+                // Validation error
+                throw new HttpException(422, Json::encode($model->errors));
+            }
+        }
+    }
+
+    // ลบรายการ บัตรคิว
+    public function actionDeleteCard($id)
+    {
+        $this->findModelCard($id)->delete();
+        return [
+            'message' => 'ลบรายการสำเร็จ'
+        ];
+    }
+
+    // รายการโปรไฟล์
+    public function actionProfileServiceList()
+    {
+        return AppQuery::getProfileList();
+    }
+
+    // ตัวเลือก ฟอร์มสร้างโปรไฟล์
+    public function actionProfileServiceOptions()
+    {
+        $counters = AppQuery::getCounterOptions();
+        $queue_service_options = AppQuery::getQueueServiceOptions();
+        $services = (new \yii\db\Query())
+            ->select([
+                'tbl_service.service_id', 
+                'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name',
+                'tbl_service_group.queue_service_id'
+            ])
+            ->from('tbl_service')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+            ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
+            ->where([
+                'tbl_service.service_status' => 1
+            ])
+            ->all();
+        $examinations = AppQuery::getExaminationOprions();
+        return [
+            'counters' => $counters,
+            'queue_service_options' => $queue_service_options,
+            'services' => $services,
+            'examinations' => $examinations,
+        ];
+    }
+
+    // สร้างรายการ โปรไฟล์
+    public function actionCreateProfileService()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = new TblProfileService();
+        $model->load($params, '');
+        $model->service_id = !empty($params['service_id']) ? $params['service_id'] : '';
+        $model->examination_id = !empty($params['examination_id']) ? $params['examination_id'] : '';
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // แก้ไขรายการ โปรไฟล์
+    public function actionUpdateProfileService()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = $this->findModelProfileService($params['profile_service_id']);
+        $model->load($params, '');
+        $model->service_id = !empty($params['service_id']) ? $params['service_id'] : '';
+        $model->examination_id = !empty($params['examination_id']) ? $params['examination_id'] : '';
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // ลบรายการ โปรไฟล์
+    public function actionDeleteProfileService($id)
+    {
+        $this->findModelProfileService($id)->delete();
+        return [
+            'message' => 'ลบรายการสำเร็จ'
+        ];
+    }
+
+    // รายการ เคาน์เตอร์
+    public function actionCounterList()
+    {
+        return TblCounter::find()->all();
+    }
+
+    // สร้างรายการ เคาน์เตอร์
+    public function actionCreateCounter()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = new TblCounter();
+        $model->load($params, '');
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // แก้ไขรายการ เคาน์เตอร์
+    public function actionUpdateCounter()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = $this->findModelCounter($params['counter_id']);
+        $model->load($params, '');
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // ลบรายการ เคาน์เตอร์
+    public function actionDeleteCounter($id)
+    {
+        $this->findModelCounter($id)->delete();
+        TblCounterService::deleteAll(['counter_id' => $id]);
+        return [
+            'message' => 'ลบรายการสำเร็จ'
+        ];
+    }
+
+    // รายการ จุดบริการ/ช่องบริการ
+    public function actionCounterServiceList()
+    {
+        $response = [];
+        $counter_services = TblCounterService::find()->all();
+        foreach ($counter_services as $key => $counter_service) {
+            $counter = $this->findModelCounter($counter_service['counter_id']);
+            $service_sound = $this->findModelSound($counter_service['counter_service_sound']);
+            $service_no_sound = $this->findModelSound($counter_service['counter_service_no_sound']);
+            $response[] = [
+                'counter_service_id' => $counter_service['counter_service_id'],
+                'counter_service_name' => $counter_service['counter_service_name'],
+                'counter_service_no' => $counter_service['counter_service_no'],
+                'counter_service_sound' => $counter_service['counter_service_sound'],
+                'counter_service_no_sound' => $counter_service['counter_service_no_sound'],
+                'counter_id' => $counter_service['counter_id'],
+                'counter_service_status' => $counter_service['counter_service_status'],
+                'counter_name' => $counter['counter_name'],
+                'service_sound_name' => $service_sound['sound_th'],
+                'service_no_sound_name' => $service_no_sound['sound_th'],
+            ];
+        }
+        return $response;
+    }
+
+    // options
+    public function actionCounterServiceOptions()
+    {
+        $counters = AppQuery::getCounterOptions();
+        $sound_options = AppQuery::getCounterServiceSoundOptions();
+        $sound_no_options = AppQuery::getCounterServiceNoSoundOptions();
+        return [
+            'counter_options' => $counters,
+            'sound_options' => $sound_options,
+            'sound_no_options' => $sound_no_options,
+        ];
+    }
+
+    // สร้างรายการ จุดบริการ/ช่องบริการ
+    public function actionCreateCounterService()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = new TblCounterService();
+        $model->load($params, '');
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // แก้ไขรายการ จุดบริการ/ช่องบริการ
+    public function actionUpdateCounterService()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = $this->findModelCounterService($params['counter_service_id']);
+        $model->load($params, '');
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // ลบรายการ เคาน์เตอร์
+    public function actionDeleteCounterService($id)
+    {
+        $this->findModelCounterService($id)->delete();
+        return [
+            'message' => 'ลบรายการสำเร็จ'
+        ];
+    }
+
+    // รายการ โปรแกรมเสียง
+    public function actionPlayStationList()
+    {
+        $response = [];
+        $play_stations = TblPlayStation::find()->all();
+        foreach ($play_stations as $key => $play_station) {
+            $counters = TblCounter::find()->where(['counter_id' => unserialize($play_station['counter_id']) ])->all();
+            $counter_services = (new \yii\db\Query())
+                ->select([
+                    'tbl_counter_service.counter_service_id',
+                    'tbl_counter_service.counter_service_name',
+                    'tbl_counter_service.counter_service_no',
+                    'tbl_counter_service.counter_service_sound',
+                    'tbl_counter_service.counter_service_no_sound',
+                    'tbl_counter_service.counter_id',
+                    'tbl_counter_service.counter_service_status',
+                    'tbl_counter.counter_name'
+                ])
+                ->from('tbl_counter_service')
+                ->innerJoin('tbl_counter', 'tbl_counter.counter_id = tbl_counter_service.counter_id')
+                ->where(['counter_service_id' => unserialize($play_station['counter_service_id'])])
+                ->all();
+            $response[] = [
+                'play_station_id' => $play_station['play_station_id'],
+                'play_station_name' => $play_station['play_station_name'],
+                'counter_id' => $play_station['counter_id'],
+                'counter_service_id' => $play_station['counter_service_id'],
+                'last_active_date' => $play_station['last_active_date'],
+                'play_station_status' => $play_station['play_station_status'],
+                'counter_ids' => unserialize($play_station['counter_id']),
+                'counter_service_ids' => unserialize($play_station['counter_service_id']),
+                'counters' => $counters,
+                'counter_services' => $counter_services
+            ];
+        }
+        return $response;
+    }
+
+    // สร้างรายการ โปรแกรมเสียง
+    public function actionCreatePlayStation()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = new TblPlayStation();
+        $model->load($params, '');
+        $counter_id = Json::decode($params['counter_id']);
+        $counter_service_id = Json::decode($params['counter_service_id']);
+        $model->counter_id = \serialize($counter_id);
+        $model->counter_service_id = \serialize($counter_service_id);
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // แก้ไขรายการ โปรแกรมเสียง
+    public function actionUpdatePlayStation()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = $this->findModelPlayStation($params['play_station_id']);
+        $model->load($params, '');
+        $counter_id = Json::decode($params['counter_id']);
+        $counter_service_id = Json::decode($params['counter_service_id']);
+        $model->counter_id = \serialize($counter_id);
+        $model->counter_service_id = \serialize($counter_service_id);
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // ลบรายการ โปรแกรมเสียง
+    public function actionDeletePlayStation($id)
+    {
+        $this->findModelPlayStation($id)->delete();
+        return [
+            'message' => 'ลบรายการสำเร็จ'
+        ];
+    }
+
+    // ตัวเลือก โปรแกรมเสียง
+    public function actionPlayStationOptions()
+    {
+        $counters = AppQuery::getCounterOptions();
+        $counter_services = (new \yii\db\Query())
+            ->select([
+                'tbl_counter_service.counter_service_id', 
+                'CONCAT(\'(\',tbl_counter.counter_name, \') \', tbl_counter_service.counter_service_name) AS counter_service_name',
+                'tbl_counter_service.counter_id'
+            ])
+            ->from('tbl_counter_service')
+            ->innerJoin('tbl_counter', 'tbl_counter.counter_id = tbl_counter_service.counter_id')
+            ->where([
+                'tbl_counter_service.counter_service_status' => 1
+            ])
+            ->all();
+        return [
+            'counters' => $counters,
+            'counter_services' => $counter_services
+        ];
+    }
+
+    // รายการ จอแสดงผล
+    public function actionDisplayList()
+    {
+        $displays = TblDisplay::find()->all();
+        $response = [];
+        foreach ($displays as $key => $display) {
+            $counterIds = unserialize($display['counter_id']);
+            $serviceIds = unserialize($display['service_id']);
+            $counters = TblCounter::find()->where(['counter_id' => $counterIds])->all();
+            $services = (new \yii\db\Query())
+                ->select(['tbl_service.service_id', 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name'])
+                ->from('tbl_service')
+                ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+                ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
+                ->where([
+                    'tbl_service.service_status' => 1,
+                    'tbl_service.service_id' => $serviceIds
+                ])
+                ->all();
+            $response[] = [
+                'display_id' => $display['display_id'],
+                'display_name' => $display['display_name'],
+                'display_css' => $display['display_css'],
+                'page_length' => $display['page_length'],
+                'display_status' => $display['display_status'],
+                'counter_id' => $display['counter_id'],
+                'service_id' => $display['service_id'],
+                'counterIds' => $counterIds,
+                'serviceIds' => $serviceIds,
+                'counters' => $counters,
+                'services' => $services,
+            ];
+        }
+        return $response;
+    }
+
+    // display form options
+    public function actionDisplayOptions()
+    {
+        $counters = AppQuery::getCounterOptions();
+        $services = ArrayHelper::map((new \yii\db\Query())
+            ->select(['tbl_service.service_id', 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name'])
+            ->from('tbl_service')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+            ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
+            ->where([
+                'tbl_service.service_status' => 1
+            ])
+            ->all(), 'service_id', 'service_name');
+        return [
+            'counters' => $this->mapDataOptions($counters),
+            'services' => $this->mapDataOptions($services),
+        ];
+    }
+
+    // สร้างรายการ จอแสดงผล
+    public function actionCreateDisplay()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = new TblDisplay();
+        $model->load($params, '');
+        $counter_id = explode(',',$params['counter_id']);
+        $service_id = explode(',',$params['service_id']);
+        $model->counter_id = \serialize($counter_id);
+        $model->service_id = \serialize($service_id);
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
+    // แก้ไขรายการ จอแสดงผล
+    public function actionUpdateDisplay($id)
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = $this->findModelDisplay($id);
+        if(Yii::$app->request->isGet) {
+            $model->counter_id = \unserialize($model['counter_id']);
+            $model->service_id = \unserialize($model['service_id']);
+            return [
+                'model' => $model
+            ];
+        } else {
+            $model->load($params, '');
+            $counter_id = explode(',',$params['counter_id']);
+            $service_id = explode(',',$params['service_id']);
+            $model->counter_id = \serialize($counter_id);
+            $model->service_id = \serialize($service_id);
+            if($model->validate() && $model->save()) {
+                return [
+                    'message' => 'บันทึกสำเร็จ!',
+                    'model' => $model
+                ];
+            } else {
+                // Validation error
+                throw new HttpException(422, Json::encode($model->errors));
+            }
+        }
+    }
+
+    // ลบรายการ จอแสดงผล
+    public function actionDeleteDisplay($id)
+    {
+        $this->findModelDisplay($id)->delete();
+        return [
+            'message' => 'ลบรายการสำเร็จ'
+        ];
+    }
+
+    // รายการเลขรัน คิว
+    public function actionAutoNumberList()
+    {
+        return AppQuery::getAutonumberList();
+    }
+
+    // แก้ไขรายการ จุดบริการ/ช่องบริการ
+    public function actionUpdateAutoNumber()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $model = $this->findModelAutoNumber($params['id']);
+        $model->load($params, '');
+        if($model->validate() && $model->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $model
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($model->errors));
+        }
+    }
+
     private function mapDataOptions($options)
     {
         $result = [];
         foreach ($options as $key => $value) {
             $result[] = [
-                'id' => $key,
+                'id' => (int)$key,
                 'name' => $value
             ];
         }

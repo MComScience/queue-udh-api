@@ -8,6 +8,7 @@ use yii\helpers\Url;
 use app\modules\v1\models\TblCounter;
 use app\modules\v1\models\TblService;
 use app\modules\v1\models\TblQueueService;
+use app\components\AppQuery;
 /* @var $this yii\web\View */
 /* @var $model app\modules\v1\models\TblProfileService */
 /* @var $form yii\widgets\ActiveForm */
@@ -20,7 +21,7 @@ use app\modules\v1\models\TblQueueService;
     <?= $form->field($model, 'profile_service_name')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'counter_id')->widget(Select2::classname(), [
-        'data' => ArrayHelper::map(TblCounter::find()->asArray()->all(), 'counter_id', 'counter_name'),
+        'data' => AppQuery::getCounterOptions(),
         'options' => ['placeholder' => 'เลือกจุดบริการ...'],
         'pluginOptions' => [
             'allowClear' => true
@@ -29,7 +30,7 @@ use app\modules\v1\models\TblQueueService;
     ]) ?>
 
     <?= $form->field($model, 'queue_service_id')->widget(Select2::classname(), [
-        'data' => ArrayHelper::map(TblQueueService::find()->asArray()->all(), 'queue_service_id', 'queue_service_name'),
+        'data' => AppQuery::getQueueServiceOptions(),
         'options' => ['placeholder' => 'เลือก...'],
         'pluginOptions' => [
             'allowClear' => true
@@ -41,16 +42,7 @@ use app\modules\v1\models\TblQueueService;
     ]) ?>
 
     <?= $form->field($model, 'service_id')->widget(Select2::classname(), [
-        'data' => ArrayHelper::map((new \yii\db\Query())
-        ->select(['tbl_service.service_id', 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name'])
-        ->from('tbl_service')
-        ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
-        ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
-        ->where([
-            'tbl_service.service_status' => 1,
-            'tbl_service_group.queue_service_id' => $model['queue_service_id']
-        ])
-        ->all(), 'service_id', 'service_name'),
+        'data' => AppQuery::getServiceOptionsByQueueService($model['queue_service_id']),
         'options' => ['placeholder' => 'เลือก...', 'multiple' => true],
         'pluginOptions' => [
             'allowClear' => true
@@ -59,16 +51,7 @@ use app\modules\v1\models\TblQueueService;
     ]) ?>
 
     <?= $form->field($model, 'examination_id')->widget(Select2::classname(), [
-        'data' => ArrayHelper::map((new \yii\db\Query())
-        ->select(['tbl_service.service_id', 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name'])
-        ->from('tbl_service')
-        ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
-        ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
-        ->where([
-            'tbl_service.service_status' => 1,
-            'tbl_service_group.queue_service_id' => 2
-        ])
-        ->all(), 'service_id', 'service_name'),
+        'data' => AppQuery::getExaminationOprions(),
         'options' => ['placeholder' => 'เลือก...', 'multiple' => true],
         'pluginOptions' => [
             'allowClear' => true

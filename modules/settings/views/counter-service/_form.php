@@ -4,6 +4,7 @@ use yii\widgets\ActiveForm;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use app\modules\v1\models\TblCounter;
+use app\components\AppQuery;
 
 /* @var $this yii\web\View */
 /* @var $model app\modules\v1\models\TblCounterService */
@@ -19,13 +20,7 @@ use app\modules\v1\models\TblCounter;
     <?= $form->field($model, 'counter_service_no')->textInput() ?>
 
     <?= $form->field($model, 'counter_service_sound')->widget(Select2::classname(), [
-        'data' => ArrayHelper::map(
-            (new \yii\db\Query())
-                ->select(['CONCAT(tbl_sound.sound_name,\' \',\'(\',tbl_sound.sound_th,\')\') AS sound_name', 'tbl_sound.sound_id'])
-                ->from('tbl_sound')
-                ->where('sound_name LIKE :query')
-                ->addParams([':query'=>'%Service%'])
-                ->all(),'sound_id','sound_name'),
+        'data' => AppQuery::getCounterServiceSoundOptions(),
         'options' => ['placeholder' => 'เลือกรายการ...'],
         'pluginOptions' => [
             'allowClear' => true
@@ -34,13 +29,7 @@ use app\modules\v1\models\TblCounter;
     ]) ?>
 
     <?= $form->field($model, 'counter_service_no_sound')->widget(Select2::classname(), [
-        'data' => ArrayHelper::map(
-                (new \yii\db\Query())
-                ->select(['CONCAT(tbl_sound.sound_name,\' \',\'(\',tbl_sound.sound_th,\')\') AS sound_name', 'tbl_sound.sound_id'])
-                ->from('tbl_sound')
-                ->where('sound_name NOT LIKE :query')
-                ->addParams([':query'=>'%Service%'])
-                ->all(),'sound_id','sound_name'),
+        'data' => AppQuery::getCounterServiceNoSoundOptions(),
         'options' => ['placeholder' => 'เลือกรายการ...'],
         'pluginOptions' => [
             'allowClear' => true

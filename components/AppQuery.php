@@ -4,6 +4,7 @@ namespace app\components;
 use yii\db\Query;
 use app\helpers\Enum;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 use app\modules\v1\models\TblPatient;
 use app\modules\v1\models\TblQueue;
 use app\modules\v1\models\TblPrefix;
@@ -11,6 +12,9 @@ use app\modules\v1\models\TblCard;
 use app\modules\v1\models\TblFloor;
 use app\modules\v1\models\TblQueueService;
 use app\modules\v1\models\User;
+use app\modules\v1\models\TblProfileService;
+use app\modules\v1\models\TblCounter;
+use app\modules\v1\models\TblService;
 
 class AppQuery
 {
@@ -380,7 +384,7 @@ class AppQuery
                 'tbl_caller.counter_service_id' => $params['counter_service_id'], // ช่องบริการ
                 'tbl_service_group.queue_service_id' => 1 // ประเภทคิวซักประวัติ
             ])
-            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])
             ->groupBy('tbl_caller.caller_id')
             ->orderBy('tbl_caller.call_time ASC')
             ->all();
@@ -441,7 +445,7 @@ class AppQuery
                 'tbl_caller.counter_service_id' => $params['counter_service_id'], // ช่องบริการ
                 'tbl_service_group.queue_service_id' => 1 // ประเภทคิวซักประวัติ
             ])
-            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])
             ->groupBy('tbl_caller.caller_id')
             ->orderBy('tbl_caller.call_time ASC')
             ->all();
@@ -552,7 +556,7 @@ class AppQuery
                 'tbl_caller.counter_service_id' => $params['counterServiceIds'],
                 'tbl_service_group.queue_service_id' => 2 // ประเภทคิวห้องตรวจ
             ])
-            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])
             ->orderBy('tbl_caller.call_time ASC')
             ->groupBy('tbl_caller.caller_id')
             ->all();
@@ -612,7 +616,7 @@ class AppQuery
                 'tbl_caller.counter_service_id' => $params['counterServiceIds'],
                 'tbl_service_group.queue_service_id' => 2 // ประเภทคิวห้องตรวจ
             ])
-            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])
             ->orderBy('tbl_caller.hold_time ASC')
             ->groupBy('tbl_caller.caller_id')
             ->all();
@@ -691,6 +695,72 @@ class AppQuery
         return $rows;
     }
 
+    // รายการโปรไฟล์
+    public static function getProfileList()
+    {
+        $rows = TblProfileService::find()->all();
+        $response = [];
+        foreach ($rows as $key => $row) {
+            $counter = TblCounter::findOne($row['counter_id']);
+            $queueService = TblQueueService::findOne(['queue_service_id' => $row['queue_service_id']]);
+            $services = TblService::find()->where(['service_id' => Json::decode($row['service_id'])])->all();
+            $examinations = (new \yii\db\Query())
+                ->select(['tbl_service.service_id', 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name'])
+                ->from('tbl_service')
+                ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+                ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
+                ->where([
+                    'tbl_service.service_status' => 1,
+                    'tbl_service_group.queue_service_id' => 2,
+                    'tbl_service.service_id' => Json::decode($row['examination_id'])
+                ])
+                ->all();
+            $response[] = [
+                'profile_service_id' => $row['profile_service_id'],
+                'profile_service_name' => $row['profile_service_name'],
+                'counter_id' => $row['counter_id'],
+                'service_id' => $row['service_id'],
+                'examination_id' => $row['examination_id'],
+                'queue_service_id' => $row['queue_service_id'],
+                'profile_service_status' => $row['profile_service_status'],
+                'counter' => $counter,
+                'queue_service' => $queueService,
+                'services' => $services,
+                'examinations' => $examinations,
+                'queue_service_ids' => Json::decode($row['queue_service_id']),
+                'service_ids' => Json::decode($row['service_id']),
+                'examination_ids' => Json::decode($row['examination_id'])
+            ];
+        }
+        return $response;
+    }
+
+    // เลขรัน คิว
+    public static function getAutonumberList()
+    {
+        $rows = (new \yii\db\Query())
+            ->select([
+                'auto_number.id',
+                'auto_number.prefix_id',
+                'auto_number.service_group_id',
+                'auto_number.service_id',
+                'auto_number.dept_code',
+                'auto_number.number',
+                'auto_number.flag',
+                'auto_number.updated_at',
+                'tbl_service.service_code',
+                'tbl_service_group.service_group_name',
+                'tbl_prefix.prefix_code',
+                'tbl_service.service_name'
+            ])
+            ->from('auto_number')
+            ->leftJoin('tbl_service', 'tbl_service.service_id = auto_number.service_id')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = auto_number.service_group_id')
+            ->innerJoin('tbl_prefix', 'tbl_prefix.prefix_id = auto_number.prefix_id')
+            ->all();
+        return $rows;
+    }
+
     // ตัวเลือกกลุ่มบริการ
     public static function getServiceGroupOptions()
     {
@@ -737,9 +807,102 @@ class AppQuery
         ];
     }
 
+    // เคาน์เตอร์
+    public static function getCounterOptions()
+    {
+        return ArrayHelper::map(TblCounter::find()->asArray()->all(), 'counter_id', 'counter_name');
+    }
+
+    //ชื่อบริการ
+    public static function getServiceOptionsByQueueService($queue_service_id)
+    {
+        return ArrayHelper::map((new \yii\db\Query())
+            ->select(['tbl_service.service_id', 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name'])
+            ->from('tbl_service')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+            ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
+            ->where([
+                'tbl_service.service_status' => 1,
+                'tbl_service_group.queue_service_id' => $queue_service_id
+            ])
+            ->all(), 'service_id', 'service_name');
+    }
+
+    // รายการห้องตรวจ
+    public static function getExaminationOprions()
+    {
+        return ArrayHelper::map((new \yii\db\Query())
+            ->select(['tbl_service.service_id', 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name'])
+            ->from('tbl_service')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+            ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
+            ->where([
+                'tbl_service.service_status' => 1,
+                'tbl_service_group.queue_service_id' => 2
+            ])
+            ->all(), 'service_id', 'service_name');
+    }
+
     // user kiosk
     public static function getUserKioskOptions()
     {
         return ArrayHelper::map(User::find()->where(['role' => 30])->all(), 'id', 'username');
+    }
+
+    // เสียงเรียกบริการ
+    public static function getCounterServiceSoundOptions()
+    {
+        return ArrayHelper::map(
+            (new \yii\db\Query())
+                ->select(['CONCAT(tbl_sound.sound_name,\' \',\'(\',tbl_sound.sound_th,\')\') AS sound_name', 'tbl_sound.sound_id'])
+                ->from('tbl_sound')
+                ->where('sound_name LIKE :query')
+                ->addParams([':query'=>'%Service%'])
+                ->all(),'sound_id','sound_name');
+    }
+
+    // เสียงเรียกหมายเลข
+    public static function getCounterServiceNoSoundOptions()
+    {
+        return ArrayHelper::map(
+            (new \yii\db\Query())
+            ->select(['CONCAT(tbl_sound.sound_name,\' \',\'(\',tbl_sound.sound_th,\')\') AS sound_name', 'tbl_sound.sound_id'])
+            ->from('tbl_sound')
+            ->where('sound_name NOT LIKE :query')
+            ->addParams([':query'=>'%Service%'])
+            ->all(),'sound_id','sound_name');
+    }
+
+    public static function getCounterServiceOptions()
+    {
+        return ArrayHelper::map((new \yii\db\Query())
+            ->select(['tbl_counter_service.counter_service_id', 'CONCAT(\'(\',tbl_counter.counter_name, \') \', tbl_counter_service.counter_service_name) AS counter_service_name'])
+            ->from('tbl_counter_service')
+            ->innerJoin('tbl_counter', 'tbl_counter.counter_id = tbl_counter_service.counter_id')
+            ->where([
+                'tbl_counter_service.counter_service_status' => 1
+            ])
+            ->all(), 'counter_service_id', 'counter_service_name');
+    }
+
+    //
+    public static function getCallerByGroupkey($group_key)
+    {
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
+        $callers = (new \yii\db\Query())
+            ->select([
+                'tbl_caller.*',
+                'tbl_queue.queue_no'
+            ])
+            ->from('tbl_caller')
+            ->innerJoin('tbl_queue', 'tbl_queue.queue_id = tbl_caller.queue_id')
+            ->where([
+                'tbl_caller.group_key' => $group_key,
+                'tbl_queue.queue_status_id' => 2
+            ])
+            ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])
+            ->all();
+        return $callers;
     }
 }
