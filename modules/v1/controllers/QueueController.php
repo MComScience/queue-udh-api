@@ -602,7 +602,7 @@ class QueueController extends ActiveController
         $model->delete();
         $patient->delete();
         if ($file) {
-            FileHelper::unlink(Yii::getAlias('@web') . $file['base_url'] . $file['path']);
+            FileHelper::unlink(Yii::getAlias('@root') . $file['base_url'] . $file['path']);
             $file->delete();
         }
         $response = \Yii::$app->getResponse();
