@@ -219,7 +219,7 @@ class SiteController extends Controller
         
         $doc_name = '-';
         if(!empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1')) {
-            $appoints = Json::decode($modelPatient['appoint']);
+            $appoints = Json::decode(Json::decode($modelPatient['appoint']));
             if(is_array($appoints)) {
                 /* foreach ($appoints as $key => $appoint) {
                     if($appoint['dept_code'] == $service_code) {
