@@ -16,6 +16,7 @@ use app\modules\v1\models\TblQueue;
 use app\modules\v1\models\TblQueueFailed;
 use app\modules\v1\models\TblService;
 use yii\web\NotFoundHttpException;
+use yii\helpers\ArrayHelper;
 
 class SiteController extends Controller
 {
@@ -214,19 +215,31 @@ class SiteController extends Controller
         $modelPatient = $this->findModelPatient($model['patient_id']);
         $service = $this->findModelService($model['service_id']);
         $modelCard = $this->findModelCard($service['card_id']);
+        $service_code = !empty($service['service_code']) ? $service['service_code'] : '-';
+        
+        $doc_name = '-';
+        if(!empty($modelPatient['appoint']) && $model['appoint'] == 1) {
+            $appoints = Json::decode($modelPatient['appoint']);
+            if(is_array($appoints)) {
+                $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
+                $doc_name = ArrayHelper::getValue($mapAppoint, $service_code, '-');
+            }
+        }
+
         $card_template = strtr($modelCard['card_template'],[
             '{hn}' => $modelPatient['hn'],
             '{vn}' => $modelPatient['vn'],
             '{cid}' => $modelPatient['cid'],
             '{number}' => $model['queue_no'], // เลขคิว
-            '{dept_name}' => $service['service_name'], // แผนก
+            '{dept_name}' => $service['service_name'].' ('.$service_code.')', // แผนก
             '{message_right}' => $modelPatient['maininscl_name'], // ชื่อสิทธิ
             '{fullname}' => $modelPatient['fullname']. ' (<i style="font-size: 13px;">'.$model->getCasePatientName().'</i>)', // ชื่อผู้ป่วย + กรณีผู้ป่วย
             '{date}' => Yii::$app->formatter->asDate('now', 'php: d M ') . (Yii::$app->formatter->asDate('now', 'php:Y') + 543),
             '{time}' => Yii::$app->formatter->asDate('now', 'php: H:i น.'),
             '{appoint}' => $model->getAppointName(),
             '{qtype}' => $model->getCasePatientName(),
-            '{priority}' => $model->getPriorityName()
+            '{priority}' => $model->getPriorityName(),
+            '{doc_name}' => $doc_name
         ]);
         $i = !empty($service['print_copy_qty']) ? $service['print_copy_qty'] : 1; // จำนวน copy
         $template = '';
