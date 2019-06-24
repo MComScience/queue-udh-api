@@ -228,7 +228,7 @@ class SiteController extends Controller
                     }
                 } */
                 $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
-                $doc_name = ArrayHelper::getValue($mapAppoint, $service_code, '-');
+                $doc_name = ArrayHelper::getValue($mapAppoint, (string)$service_code, '-');
             }
         }
 
