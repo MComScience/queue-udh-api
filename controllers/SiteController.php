@@ -281,28 +281,14 @@ class SiteController extends Controller
         $response->format = \yii\web\Response::FORMAT_JSON;
         $doc_name = '-';
         if(!empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1')) {
-            $appoints = \json_decode($modelPatient['appoint'], true);
-            if(is_array($appoints)) {
-                
-                /* foreach ($appoints as $key => $appoint) {
-                    if($appoint['dept_code'] == $service_code) {
-                        $doc_name = $appoint['doc_name'];
-                        break;
-                    }
-                } */
-                $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
-                $doc_name = ArrayHelper::getValue($mapAppoint, (string)$service_code, '-');
-                return [
-                    'is_array' => is_array($appoints),
-                    'mapAppoint' => $mapAppoint,
-                    'service_code' => $service_code
-                ];
-            } else {
-                return [
-                    'is_array' => true,
-                    'appoints' => is_array($appoints)
-                ];
-            }
+            $appoints = Json::decode($modelPatient['appoint']);
+            $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
+            $doc_name = ArrayHelper::getValue($mapAppoint, (string)$service_code, '-');
+            return [
+                'is_array' => is_array($appoints),
+                'mapAppoint' => $mapAppoint,
+                'service_code' => $service_code
+            ];
         } else {
             return [
                 'appoint' => !empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1'),
