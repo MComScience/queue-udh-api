@@ -179,7 +179,8 @@ class TblQueue extends \yii\db\ActiveRecord
         return [
             1 => 'เดินได้',
             2 => 'รถนั่ง',
-            3 => 'รถนอน'
+            3 => 'รถนอน',
+            4 => 'อุ้ม(เด็ก)'
         ];
     }
 
@@ -295,5 +296,33 @@ class TblQueue extends \yii\db\ActiveRecord
     public static function find()
     {
         return new TblQueueQuery(get_called_class());
+    }
+
+    public function getAppointStatus()
+    {
+        return [
+            0 => 'ไม่มีนัด',
+            1 => 'มีนัด'
+        ];
+    }
+
+    public function getAppointName()
+    {
+        $appoints = $this->getAppointStatus();
+        return ArrayHelper::getValue($appoints, $this->appoint, '-');
+    }
+
+    public function getPrioritys()
+    {
+        return [
+            1 => 'คิวทั่วไป',
+            2 => 'คิวด่วน'
+        ];
+    }
+
+    public function getPriorityName()
+    {
+        $prioritys = $this->getPrioritys();
+        return ArrayHelper::getValue($prioritys, $this->priority_id, '-');
     }
 }

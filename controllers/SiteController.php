@@ -223,7 +223,10 @@ class SiteController extends Controller
             '{message_right}' => $modelPatient['maininscl_name'], // ชื่อสิทธิ
             '{fullname}' => $modelPatient['fullname']. ' (<i style="font-size: 13px;">'.$model->getCasePatientName().'</i>)', // ชื่อผู้ป่วย + กรณีผู้ป่วย
             '{date}' => Yii::$app->formatter->asDate('now', 'php: d M ') . (Yii::$app->formatter->asDate('now', 'php:Y') + 543),
-            '{time}' => Yii::$app->formatter->asDate('now', 'php: H:i น.')
+            '{time}' => Yii::$app->formatter->asDate('now', 'php: H:i น.'),
+            '{appoint}' => $model->getAppointName(),
+            '{qtype}' => $model->getCasePatientName(),
+            '{priority}' => $model->getPriorityName()
         ]);
         $i = !empty($service['print_copy_qty']) ? $service['print_copy_qty'] : 1; // จำนวน copy
         $template = '';
@@ -305,9 +308,9 @@ class SiteController extends Controller
         }
     }
 
-    /* public function actionImportData()
+    public function actionImportData()
     {
-        $rows = Yii::$app->db3->createCommand('SELECT * FROM tbl_queue WHERE tbl_queue.queue_id > 57638 ORDER BY tbl_queue.queue_id ASC LIMIT 2000')->queryAll();
+        $rows = Yii::$app->db3->createCommand('SELECT * FROM tbl_queue WHERE tbl_queue.queue_id > 57816 ORDER BY tbl_queue.queue_id ASC LIMIT 2000')->queryAll();
         $count = 0;
         $no_service = [];
         $last_id = 0;
@@ -363,7 +366,7 @@ class SiteController extends Controller
 
     public function actionImportData2()
     {
-        $rows = Yii::$app->db3->createCommand('SELECT * FROM tbl_patient WHERE tbl_patient.patient_id > 57119 ORDER BY tbl_patient.patient_id ASC LIMIT 5000')->queryAll();
+        $rows = Yii::$app->db3->createCommand('SELECT * FROM tbl_patient WHERE tbl_patient.patient_id > 57847 ORDER BY tbl_patient.patient_id ASC LIMIT 5000')->queryAll();
         $count = 0;
         $last_id = 0;
         $db = Yii::$app->db;
@@ -410,5 +413,5 @@ class SiteController extends Controller
             $transaction->rollBack();
             throw $e;
         }
-    } */
+    }
 }

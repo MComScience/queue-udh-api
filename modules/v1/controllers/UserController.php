@@ -314,6 +314,9 @@ class UserController extends ActiveController
     }
 JSON;
         return Json::decode($json); */
+        if(empty($cid) || strlen($cid) < 13) {
+            throw new HttpException(422, 'ไม่พบข้อมูลสิทธิการรักษา');
+        }
         $client = Yii::$app->nhso;
         $sql = "SELECT * FROM nhso_token ORDER BY updated_at DESC";
         $userToken = \Yii::$app->db2->createCommand($sql)->queryOne();
