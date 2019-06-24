@@ -269,6 +269,84 @@ class SiteController extends Controller
         ]);
     }
 
+    public function actionPrintTest($id)
+    {
+        $logger = Yii::$app->logger->getLogger();
+        $model = $this->findModelQueue($id);
+        $modelPatient = $this->findModelPatient($model['patient_id']);
+        $service = $this->findModelService($model['service_id']);
+        $modelCard = $this->findModelCard($service['card_id']);
+        $service_code = !empty($service['service_code']) ? $service['service_code'] : '-';
+        $response = Yii::$app->response;
+        $response->format = \yii\web\Response::FORMAT_JSON;
+        $doc_name = '-';
+        if(!empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1')) {
+            $appoints = Json::decode($modelPatient['appoint']);
+            if(is_array($appoints)) {
+                
+                /* foreach ($appoints as $key => $appoint) {
+                    if($appoint['dept_code'] == $service_code) {
+                        $doc_name = $appoint['doc_name'];
+                        break;
+                    }
+                } */
+                $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
+                $doc_name = ArrayHelper::getValue($mapAppoint, (string)$service_code, '-');
+                return [
+                    'is_array' => true,
+                    'mapAppoint' => $mapAppoint,
+                    'service_code' => $service_code
+                ];
+            } else {
+                return [
+                    'is_array' => true,
+                    'appoints' => $appoints
+                ];
+            }
+        } else {
+            return [
+                'appoint' => !empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1'),
+                'model' => $model
+            ];
+        }
+
+        $card_template = strtr($modelCard['card_template'],[
+            '{hn}' => $modelPatient['hn'],
+            '{vn}' => $modelPatient['vn'],
+            '{cid}' => $modelPatient['cid'],
+            '{number}' => $model['queue_no'], // เลขคิว
+            '{dept_name}' => $service['service_name'].' ('.$service_code.')', // แผนก
+            '{message_right}' => $modelPatient['maininscl_name'], // ชื่อสิทธิ
+            '{fullname}' => $modelPatient['fullname']. ' (<i style="font-size: 13px;">'.$model->getCasePatientName().'</i>)', // ชื่อผู้ป่วย + กรณีผู้ป่วย
+            '{date}' => Yii::$app->formatter->asDate('now', 'php: d M ') . (Yii::$app->formatter->asDate('now', 'php:Y') + 543),
+            '{time}' => Yii::$app->formatter->asDate('now', 'php: H:i น.'),
+            '{appoint}' => $model->getAppointName(),
+            '{qtype}' => $model->getCasePatientName(),
+            '{priority}' => $model->getPriorityName(),
+            '{doc_name}' => $doc_name
+        ]);
+        $i = !empty($service['print_copy_qty']) ? $service['print_copy_qty'] : 1; // จำนวน copy
+        $template = '';
+        for($x = 0; $x < $i; $x++) {
+            $template .= strtr($card_template,[
+                '{qrcode}' => '<div id="qrcode'.$x.'" class="qrcode" style="text-align: right;padding-right: 20px;"></div>',
+                '{barcode}' => '<img id="barcode'.$x.'"/>',
+            ]);
+        }
+        // save log
+        $logger->info('Printing', [
+            'patient' => Json::encode($modelPatient),
+            'queue' => Json::encode($model)
+        ]);
+        return $this->renderAjax('print', [
+            'model' => $model,
+            'service' => $service,
+            'patient' => $modelPatient,
+            'template' => $template,
+            'i' => $i
+        ]);
+    }
+
     public function actionPrintOneStop($msg, $q)
     {
         $logger = Yii::$app->logger->getLogger();
