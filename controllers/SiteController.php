@@ -293,14 +293,14 @@ class SiteController extends Controller
                 $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
                 $doc_name = ArrayHelper::getValue($mapAppoint, (string)$service_code, '-');
                 return [
-                    'is_array' => true,
+                    'is_array' => is_array($appoints),
                     'mapAppoint' => $mapAppoint,
                     'service_code' => $service_code
                 ];
             } else {
                 return [
                     'is_array' => true,
-                    'appoints' => $appoints
+                    'appoints' => is_array($appoints)
                 ];
             }
         } else {
