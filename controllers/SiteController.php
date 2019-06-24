@@ -221,8 +221,14 @@ class SiteController extends Controller
         if(!empty($modelPatient['appoint']) && $model['appoint'] == '1') {
             $appoints = Json::decode($modelPatient['appoint']);
             if(is_array($appoints)) {
-                $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
-                $doc_name = ArrayHelper::getValue($mapAppoint, $service_code, '-');
+                foreach ($appoints as $key => $appoint) {
+                    if($appoint['dept_code'] == $service_code) {
+                        $doc_name = $appoint['doc_name'];
+                        break;
+                    }
+                }
+                // $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
+                // $doc_name = ArrayHelper::getValue($mapAppoint, $service_code, '-');
             }
         }
 
