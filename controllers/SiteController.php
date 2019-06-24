@@ -218,20 +218,18 @@ class SiteController extends Controller
         $service_code = !empty($service['service_code']) ? $service['service_code'] : '-';
         
         $doc_name = '-';
-        if($modelPatient['appoint'] && ((string)$model['appoint'] == '1')) {
+        if(!empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1')) {
             $appoints = Json::decode($modelPatient['appoint']);
-            $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
-            $doc_name = ArrayHelper::getValue($mapAppoint, $service_code, '-');
-            // if(is_array($appoints)) {
-            //     /* foreach ($appoints as $key => $appoint) {
-            //         if($appoint['dept_code'] == $service_code) {
-            //             $doc_name = $appoint['doc_name'];
-            //             break;
-            //         }
-            //     } */
-            //     $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
-            //     $doc_name = ArrayHelper::getValue($mapAppoint, $service_code, '-');
-            // }
+            if(is_array($appoints)) {
+                /* foreach ($appoints as $key => $appoint) {
+                    if($appoint['dept_code'] == $service_code) {
+                        $doc_name = $appoint['doc_name'];
+                        break;
+                    }
+                } */
+                $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
+                $doc_name = ArrayHelper::getValue($mapAppoint, $service_code, '-');
+            }
         }
 
         $card_template = strtr($modelCard['card_template'],[
