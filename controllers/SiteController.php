@@ -281,7 +281,7 @@ class SiteController extends Controller
         $response->format = \yii\web\Response::FORMAT_JSON;
         $doc_name = '-';
         if(!empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1')) {
-            $appoints = Json::decode($modelPatient['appoint']);
+            $appoints = Json::decode(Json::decode($modelPatient['appoint']));
             $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
             $doc_name = ArrayHelper::getValue($mapAppoint, (string)$service_code, '-');
             return [
