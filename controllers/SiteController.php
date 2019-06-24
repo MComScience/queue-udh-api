@@ -218,7 +218,7 @@ class SiteController extends Controller
         $service_code = !empty($service['service_code']) ? $service['service_code'] : '-';
         
         $doc_name = '-';
-        if(!empty($modelPatient['appoint']) && $model['appoint'] == 1) {
+        if(!empty($modelPatient['appoint']) && $model['appoint'] == '1') {
             $appoints = Json::decode($modelPatient['appoint']);
             if(is_array($appoints)) {
                 $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
