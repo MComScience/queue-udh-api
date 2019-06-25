@@ -117,6 +117,7 @@ class QueueController extends ActiveController
                 'get-display' => ['GET'],
                 'queue-play-list' => ['GET'],
                 'active-play-station' => ['GET'],
+                'get-services' => ['GET']
             ],
         ];
         // remove authentication filter
@@ -161,7 +162,8 @@ class QueueController extends ActiveController
                         'list-all', 'update-patient', 'data-waiting', 'profile-service-options',
                         'call-wait', 'data-wait-by-hn', 'end-wait', 'data-caller', 'recall', 'hold',
                         'data-hold', 'end', 'call-hold', 'end-hold', 'call-selected', 'register-examination',
-                        'data-waiting-examination', 'data-caller-examination', 'data-hold-examination'
+                        'data-waiting-examination', 'data-caller-examination', 'data-hold-examination',
+                        'get-services'
                     ],
                     'roles' => [
                         User::ROLE_ADMIN,
@@ -180,7 +182,7 @@ class QueueController extends ActiveController
         $logger = Yii::$app->logger->getLogger();
         $params = \Yii::$app->getRequest()->getBodyParams();
         $imgUrl = '';
-        $modelService = TblService::find()->findByServiceCode($params['service']['dept_code']); // ค้นหาแผนก
+        $modelService = $this->findModelService($params['service']['service_id']); // ค้นหาแผนก
         $this->checkDept($modelService, $params, $logger); // ตรวจสอบข้อมูลแผนก
         $startDate = Enum::startDateNow(); // start date today
         $endDate = Enum::endDateNow(); // end date today
@@ -314,7 +316,7 @@ class QueueController extends ActiveController
     private function checkDept($modelService, $params, $logger)
     {
         if (!$modelService) { // ถ้าไม่พบข้อมูลแผนก
-            $logger->error('ไม่พบข้อมูลแผนกในระบบคิว', ['msg' => 'ไม่พบข้อมูลแผนกในระบบคิว', 'dept_code' => $params['service']['dept_code']]); // save to log file
+            $logger->error('ไม่พบข้อมูลแผนกในระบบคิว', ['msg' => 'ไม่พบข้อมูลแผนกในระบบคิว', 'dept_code' => $modelService['service_code']]); // save to log file
             Yii::$app->notify->sendMessage('ไม่พบข้อมูลแผนกในระบบคิว! ' . "\n" . Json::encode([
                 'hn' => $params['user']['hn'],
                 'fullname' => $params['user']['fullname'],
@@ -1555,5 +1557,11 @@ class QueueController extends ActiveController
                 'status' => 'deactive'
             ];
         }
+    }
+
+    // รายชื่อบริการ
+    public function actionGetServices()
+    {
+        return TblService::find()->where('service_code <> :service_code', [':service_code' => ''])->orderBy('service_order asc')->all();
     }
 }

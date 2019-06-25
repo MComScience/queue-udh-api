@@ -124,6 +124,8 @@ return [
             'OPTIONS queue-play-list' => 'options',
             'GET active-play-station' => 'active-play-station',
             'OPTIONS active-play-station' => 'options',
+            'GET get-services' => 'get-services',
+            'OPTIONS get-services' => 'options',
         ]
     ],
     [
