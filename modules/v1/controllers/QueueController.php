@@ -1104,7 +1104,7 @@ class QueueController extends ActiveController
     {
         $cache = \Yii::$app->cache;
         $source = $cache->get('S_'.$number);
-        //if ($source === false) {
+        if ($source === false) {
             $component = \Yii::createObject([
                 'class' => SoundComponent::className(),
                 'number' => $number,
@@ -1113,9 +1113,9 @@ class QueueController extends ActiveController
             $source = $component->getSource();
             $cache->set('S_'.$number, $source, 3600*3);
             return $source;
-        /* } else {
+        } else {
             return $source;
-        } */
+        }
     }
 
     // ออกบัตรคิวห้องตรวจ
