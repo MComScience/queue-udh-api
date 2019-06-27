@@ -548,7 +548,8 @@ class SettingsController extends ActiveController
             ->select([
                 'tbl_service.service_id', 
                 'CONCAT(\'(\', tbl_queue_service.queue_service_name ,\') \', tbl_service.service_name) AS service_name',
-                'tbl_service_group.queue_service_id'
+                'tbl_service_group.queue_service_id',
+                'tbl_service.service_code'
             ])
             ->from('tbl_service')
             ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
