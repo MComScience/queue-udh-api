@@ -905,4 +905,53 @@ class AppQuery
             ->all();
         return $callers;
     }
+
+    // ตัวเลือกการตั้งค่า LED
+    public static function getLedOptions()
+    {
+        // ชื่อบริการ
+        $services = (new \yii\db\Query())
+            ->select([
+                'tbl_service.service_id',
+                'tbl_service.service_code',
+                'tbl_service.service_name',
+                'tbl_service.service_group_id',
+                'tbl_service.service_prefix',
+                'tbl_service.service_num_digit',
+                'tbl_service.card_id',
+                'tbl_service.prefix_id',
+                'tbl_service.prefix_running',
+                'tbl_service.print_copy_qty',
+                'tbl_service.service_order',
+                'tbl_service.service_status',
+                'tbl_service_group.service_group_name',
+                'tbl_service_group.service_group_order',
+                'tbl_service_group.floor_id',
+                'tbl_service_group.queue_service_id',
+                'tbl_queue_service.queue_service_name'
+            ])
+            ->from('tbl_service')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+            ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
+            ->all();
+        // เคาน์เตอร์
+        $counters = (new \yii\db\Query())
+            ->select([
+                'tbl_counter_service.counter_service_id',
+                'tbl_counter_service.counter_service_name',
+                'tbl_counter_service.counter_service_no',
+                'tbl_counter_service.counter_service_sound',
+                'tbl_counter_service.counter_service_no_sound',
+                'tbl_counter_service.counter_id',
+                'tbl_counter_service.counter_service_status',
+                'tbl_counter.counter_name'
+            ])
+            ->from('tbl_counter_service')
+            ->innerJoin('tbl_counter', 'tbl_counter.counter_id = tbl_counter_service.counter_id')
+            ->all();
+        return [
+            'services' => $services,
+            'counters' => $counters
+        ];
+    }
 }

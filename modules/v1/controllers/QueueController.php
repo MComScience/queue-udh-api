@@ -117,7 +117,8 @@ class QueueController extends ActiveController
                 'get-display' => ['GET'],
                 'queue-play-list' => ['GET'],
                 'active-play-station' => ['GET'],
-                'get-services' => ['GET']
+                'get-services' => ['GET'],
+                'led-options' => ['GET']
             ],
         ];
         // remove authentication filter
@@ -139,7 +140,8 @@ class QueueController extends ActiveController
         $behaviors['authenticator']['except'] = [
             'options', 'data-print', 'kiosk-list', 'priority', 'patient-register',
             'dashboard', 'play-stations', 'get-play-station', 'update-call-status',
-            'display-list', 'get-display', 'queue-play-list', 'active-play-station'
+            'display-list', 'get-display', 'queue-play-list', 'active-play-station',
+            'led-options'
         ];
         // setup access
         $behaviors['access'] = [
@@ -1490,6 +1492,7 @@ class QueueController extends ActiveController
                 'artist' => $modelPatient['fullname'],
                 'pic' => Url::base(true).'/images/cbimage.jpg'
             ];
+            $callers = AppQuery::getCallerByGroupkey($modelCall['group_key']);
             $response[] = [
                 'caller' => $modelCall,
                 'counter' => $modelCounter,
@@ -1536,7 +1539,8 @@ class QueueController extends ActiveController
                     'counter_service_name' => $modelCounterService['counter_service_name'],
                     'counter_service_id' => $modelCounterService['counter_service_id'],
                 ],
-                'sources' => $sources
+                'sources' => $sources,
+                'call_groups' => ArrayHelper::getColumn($callers, 'queue_no')
             ];
         }
         return $response;
@@ -1563,5 +1567,10 @@ class QueueController extends ActiveController
     public function actionGetServices()
     {
         return TblService::find()->where('service_code <> :service_code', [':service_code' => ''])->orderBy('service_order asc')->all();
+    }
+
+    public function actionLedOptions()
+    {
+        return AppQuery::getLedOptions();
     }
 }

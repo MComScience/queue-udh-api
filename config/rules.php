@@ -126,6 +126,8 @@ return [
             'OPTIONS active-play-station' => 'options',
             'GET get-services' => 'get-services',
             'OPTIONS get-services' => 'options',
+            'GET led-options' => 'led-options',
+            'OPTIONS led-options' => 'options',
         ]
     ],
     [
