@@ -771,6 +771,7 @@ class QueueController extends ActiveController
                 'counter_id' => $modelCall['counter_id'],
                 'counter_service_id' => $modelCall['counter_service_id'],
                 'counter_service_name' => $modelCounterService['counter_service_name'],
+                'counter_service_no' => $modelCounterService['counter_service_no'],
                 'call_time' => $modelCall['call_time']
             ]);
             $params['queue'] = $queue;
@@ -831,6 +832,7 @@ class QueueController extends ActiveController
                         'counter_id' => $modelCall['counter_id'],
                         'counter_service_id' => $modelCall['counter_service_id'],
                         'counter_service_name' => $modelCounterService['counter_service_name'],
+                        'counter_service_no' => $modelCounterService['counter_service_no'],
                         'call_time' => $modelCall['call_time']
                     ]);
                     $response[] = [
@@ -930,6 +932,7 @@ class QueueController extends ActiveController
             $params['queue']['counter_id'] = $modelCall['counter_id'];
             $params['queue']['counter_service_id'] = $modelCall['counter_service_id'];
             $params['queue']['counter_service_name'] = $modelCounterService['counter_service_name'];
+            $params['queue']['counter_service_no'] = $modelCounterService['counter_service_no'];
             $params['queue']['call_time'] = $modelCall['call_time'];
             $params['counter_service']['key'] = $modelCounterService['counter_service_id'];
             $params['counter_service']['value'] = $modelCounterService['counter_service_name'];
@@ -973,6 +976,7 @@ class QueueController extends ActiveController
             $params['queue']['counter_id'] = $modelCall['counter_id'];
             $params['queue']['counter_service_id'] = $modelCall['counter_service_id'];
             $params['queue']['counter_service_name'] = $modelCounterService['counter_service_name'];
+            $params['queue']['counter_service_no'] = $modelCounterService['counter_service_no'];
             $params['counter_service']['key'] = $modelCounterService['counter_service_id'];
             $params['counter_service']['value'] = $modelCounterService['counter_service_name'];
             return ArrayHelper::merge($params, [
@@ -1007,6 +1011,7 @@ class QueueController extends ActiveController
             $params['queue']['counter_id'] = $modelCall['counter_id'];
             $params['queue']['counter_service_id'] = $modelCall['counter_service_id'];
             $params['queue']['counter_service_name'] = $modelCounterService['counter_service_name'];
+            $params['queue']['counter_service_no'] = $modelCounterService['counter_service_no'];
             $params['counter_service']['key'] = $modelCounterService['counter_service_id'];
             $params['counter_service']['value'] = $modelCounterService['counter_service_name'];
             $params['queue']['end_time'] = $modelCall['end_time'];
@@ -1045,6 +1050,7 @@ class QueueController extends ActiveController
             $params['queue']['counter_id'] = $modelCall['counter_id'];
             $params['queue']['counter_service_id'] = $modelCall['counter_service_id'];
             $params['queue']['counter_service_name'] = $modelCounterService['counter_service_name'];
+            $params['queue']['counter_service_no'] = $modelCounterService['counter_service_no'];
             $params['counter_service']['key'] = $modelCounterService['counter_service_id'];
             $params['counter_service']['value'] = $modelCounterService['counter_service_name'];
             return ArrayHelper::merge($params, [
@@ -1088,6 +1094,7 @@ class QueueController extends ActiveController
             $params['queue']['counter_id'] = $modelCall['counter_id'];
             $params['queue']['counter_service_id'] = $modelCall['counter_service_id'];
             $params['queue']['counter_service_name'] = $modelCounterService['counter_service_name'];
+            $params['queue']['counter_service_no'] = $modelCounterService['counter_service_no'];
             $params['counter_service']['key'] = $modelCounterService['counter_service_id'];
             $params['counter_service']['value'] = $modelCounterService['counter_service_name'];
             return ArrayHelper::merge($params, [
