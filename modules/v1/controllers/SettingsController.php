@@ -680,10 +680,12 @@ class SettingsController extends ActiveController
                 'counter_service_sound' => $counter_service['counter_service_sound'],
                 'counter_service_no_sound' => $counter_service['counter_service_no_sound'],
                 'counter_id' => $counter_service['counter_id'],
+                'doctor_id' => (string)$counter_service['doctor_id'],
                 'counter_service_status' => $counter_service['counter_service_status'],
                 'counter_name' => $counter['counter_name'],
                 'service_sound_name' => $service_sound['sound_th'],
                 'service_no_sound_name' => $service_no_sound['sound_th'],
+                'doctor_name' => empty($counter_service['doctor_id']) ? '-' : $counter_service->doctor->fullname
             ];
         }
         return $response;
@@ -695,10 +697,12 @@ class SettingsController extends ActiveController
         $counters = AppQuery::getCounterOptions();
         $sound_options = AppQuery::getCounterServiceSoundOptions();
         $sound_no_options = AppQuery::getCounterServiceNoSoundOptions();
+        $doctors = AppQuery::getDoctorOptions();
         return [
             'counter_options' => $counters,
             'sound_options' => $sound_options,
             'sound_no_options' => $sound_no_options,
+            'doctors' => $doctors
         ];
     }
 

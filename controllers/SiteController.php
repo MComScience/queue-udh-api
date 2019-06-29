@@ -15,6 +15,7 @@ use yii\httpclient\Client;
 use app\modules\v1\models\TblQueue;
 use app\modules\v1\models\TblQueueFailed;
 use app\modules\v1\models\TblService;
+use app\modules\v1\models\TblDoctor;
 use yii\web\NotFoundHttpException;
 use yii\helpers\ArrayHelper;
 
@@ -216,6 +217,7 @@ class SiteController extends Controller
         $service = $this->findModelService($model['service_id']);
         $modelCard = $this->findModelCard($service['card_id']);
         $service_code = !empty($service['service_code']) ? $service['service_code'] : '-';
+        $doctor = TblDoctor::findOne($model['queue_id']);
         
         $doc_name = '-';
         if(!empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1')) {
@@ -245,7 +247,8 @@ class SiteController extends Controller
             '{appoint}' => $model->getAppointName(),
             '{qtype}' => $model->getCasePatientName(),
             '{priority}' => $model->getPriorityName(),
-            '{doc_name}' => $doc_name
+            '{doc_name}' => $doc_name,
+            '{doc_name2}' => $doctor ? $doctor->fullname : '-'
         ]);
         $i = !empty($service['print_copy_qty']) ? $service['print_copy_qty'] : 1; // จำนวน copy
         $template = '';
@@ -496,5 +499,36 @@ class SiteController extends Controller
             $transaction->rollBack();
             throw $e;
         }
+    }
+
+    public function actionGetDoctor()
+    {
+        $response = Yii::$app->response;
+        $response->format = \yii\web\Response::FORMAT_JSON;
+        $doctors = Yii::$app->db_udon2->createCommand('SELECT
+            dbo.DOCC.docCode,
+            dbo.DOCC.doctitle,
+            dbo.DOCC.docName,
+            dbo.DOCC.docLName
+            FROM
+            dbo.DOCC')->queryAll();
+        $response = [];
+        foreach ($doctors as $key => $doctor) {
+            $doctitle = preg_replace('/\s+/', '', $doctor['doctitle']);
+            $docName = preg_replace('/\s+/', '', $doctor['docName']);
+            $docLName = preg_replace('/\s+/', '', $doctor['docLName']);
+
+            $model = new TblDoctor();
+            $model->doctor_title = $doctitle;
+            $model->doctor_name = $docName.' '.$docLName;
+            $model->save();
+            $response[] = [
+                'docCode' => preg_replace('/\s+/', '', $doctor['docCode']),
+                'doctitle' => preg_replace('/\s+/', '', $doctor['doctitle']),
+                'docName' => preg_replace('/\s+/', '', $doctor['docName']),
+                'docLName' => preg_replace('/\s+/', '', $doctor['docLName']),
+            ];
+        }
+        return $response;
     }
 }

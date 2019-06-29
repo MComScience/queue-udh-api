@@ -36,6 +36,7 @@ use app\modules\v1\models\TblServiceGroup;
 use app\modules\v1\models\TblService;
 use app\modules\v1\models\TblPlayStation;
 use app\modules\v1\models\TblDisplay;
+use app\modules\v1\models\TblDoctor;
 use app\helpers\Enum;
 use app\components\AppQuery;
 use app\components\SoundComponent;
@@ -641,16 +642,41 @@ class QueueController extends ActiveController
         ])->all();
         foreach ($profiles as $key => $profile) {
             $counter = $this->findModelCounter($profile['counter_id']); // เคาน์เตอร์
+            $counterServices = TblCounterService::find()->where(['counter_id' => $counter['counter_id']])->all();
+            $counterExamination = TblCounter::findOne($profile['examination_counter_id']); // เคาน์เตอร์
             $services = TblService::find()->where(['service_id' => Json::decode($profile['service_id'])])->all();
             $examinations = TblService::find()->where(['service_id' => Json::decode($profile['examination_id'])])->all();
-            $counterServiceOptions = ArrayHelper::map(TblCounterService::find()->where(['counter_id' => $profile['counter_id']])->asArray()->all(), 'counter_service_id', 'counter_service_name');
-            /* $counterServiceOptions = [];
-            foreach ($counterServices as $k => $value) {
-                $counterServiceOptions[] = [
-                    'key' => $k,
-                    'value' => $value
-                ];
-            } */
+            // $counterServiceOptions = ArrayHelper::map($counterServices, 'counter_service_id', 'counter_service_name');
+            $doctors = [];
+            if($counterExamination){
+                $counterServiceExaminations = TblCounterService::find()
+                    ->where(['counter_id' => $counterExamination['counter_id']])
+                    ->orderBy('counter_service_no asc')
+                    ->all();
+                foreach ($counterServiceExaminations as $key => $counterService) {
+                    if(!empty($counterService['doctor_id'])) {
+                        $doctor = TblDoctor::findOne($counterService['doctor_id']);
+                        $doctors[] = [
+                            'doctor_id' => $doctor['doctor_id'],
+                            'doctor_name' => $doctor->fullname,
+                            'counter_service_id' => $counterService['counter_service_id'],
+                            'counter_service_name' => $counterService['counter_service_name']
+                        ];
+                    } else {
+                        $doctors[] = [
+                            'doctor_id' => 1,
+                            'doctor_name' => 'ไม่ระบุแพทย์',
+                            'counter_service_id' => $counterService['counter_service_id'],
+                            'counter_service_name' => $counterService['counter_service_name']
+                        ];
+                    }
+                }
+            }
+            $counterServiceOptions = [];
+            foreach ($counterServices as $k => $counterService) {
+                $counterServiceOptions[$counterService['counter_service_id']] = 
+                !empty($counterService['doctor_id']) ? $counterService['counter_service_name'].' '.$counterService->doctor->fullname : $counterService['counter_service_name'];
+            }
             $response[] = [
                 'profile' => [
                     'counter_id' => $profile['counter_id'],
@@ -663,10 +689,13 @@ class QueueController extends ActiveController
                     'queueServiceName' => $profile->queueService->queue_service_name
                 ],
                 'counter' => $counter,
+                'counterServices' => $counterServices,
+                'counterExamination' => $counterExamination,
                 'services' => $services,
                 'counterServiceOptions' => $counterServiceOptions,
                 'examinations' => $examinations,
                 'examinationOptions' => ArrayHelper::map($examinations, 'service_id', 'service_name'),
+                'doctors' => $doctors
             ];
         }
         return $response;
@@ -1140,6 +1169,7 @@ class QueueController extends ActiveController
         $modelServiceGroup = $this->findModelServiceGroup($modelService['service_group_id']); // กลุ่มบริการ
         $modelStorage = FileStorageItem::findOne(['ref_id' => $oldQueue['patient_id']]); // ไฟล์ภาพ
         $modelQueueService = $this->findModelQueueService($modelServiceGroup['queue_service_id']); // ประเภทคิวบริการ
+        $counterService = $this->findModelCounterService($params['counter_service_id']);
         $imgUrl = '';
         if ($modelStorage) { // ถ้ามีรูปภาพเดิมจากคิวซักประวัติ
             $imgUrl = Html::imgUrl($modelStorage['path']); // ลิ้งค์รูปภาพ
@@ -1203,9 +1233,11 @@ class QueueController extends ActiveController
                     'case_patient' => $oldQueue['case_patient'], // กรณีผู้ป่วย
                     'appoint' => $oldQueue['appoint'], // คิวนัด
                     'parent_id' => $oldQueue['queue_id'], // ออกคิวจาก
+                    'doctor_id' => $counterService['doctor_id'], // แพทย์
                     'queue_status_id' => TblQueue::STATUS_WAIT, // default รอเรียก
                 ]);
                 if ($modelQueue->save()) {
+                    $doctor = TblDoctor::findOne($modelQueue['doctor_id']);
                     $queue = [
                         'queue_id' => $modelQueue['queue_id'],
                         'queue_no' => $modelQueue['queue_no'],
@@ -1231,7 +1263,8 @@ class QueueController extends ActiveController
                         'name' => $modelQueue->profile ? $modelQueue->profile->name : '',
                         'base_url' => $modelStorage ? $modelStorage['base_url'] : '',
                         'path' => $modelStorage ? $modelStorage['path'] : '',
-                        'queue_service_name' => $modelQueueService['queue_service_name']
+                        'queue_service_name' => $modelQueueService['queue_service_name'],
+                        'doctor_name' => $doctor ? $doctor->fullname : '-'
                     ];
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();

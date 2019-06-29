@@ -27,6 +27,7 @@ use app\helpers\Enum;
  * @property int $queue_status_id สถานะคิว
  * @property int $appoint คิวนัด
  * @property int $parent_id ออกคิวจาก
+ * @property int $doctor_id แพทย์
  * @property string $created_at วันที่บันทึก
  * @property string $updated_at วันที่แก้ไข
  * @property int $created_by ผู้บันทึก
@@ -86,7 +87,7 @@ class TblQueue extends \yii\db\ActiveRecord
     {
         return [
             [['patient_id', 'service_group_id', 'service_id', 'priority_id', 'queue_station', 'case_patient', 'queue_status_id', 'appoint'], 'required'],
-            [['patient_id', 'service_group_id', 'service_id', 'priority_id', 'queue_station', 'case_patient', 'queue_status_id', 'appoint', 'parent_id', 'created_by', 'updated_by'], 'integer'],
+            [['patient_id', 'service_group_id', 'service_id', 'priority_id', 'queue_station', 'case_patient', 'queue_status_id', 'appoint', 'parent_id', 'doctor_id', 'created_by', 'updated_by'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
             [['queue_no'], 'string', 'max' => 100],
         ];
@@ -109,6 +110,7 @@ class TblQueue extends \yii\db\ActiveRecord
             'queue_status_id' => 'สถานะคิว',
             'appoint' => 'คิวนัด',
             'parent_id' => 'ออกคิวจาก', // เฉพาะคิวห้องตรวจ
+            'doctor_id' => 'แพทย์',
             'created_at' => 'วันที่บันทึก',
             'updated_at' => 'วันที่แก้ไข',
             'created_by' => 'ผู้บันทึก',
@@ -149,6 +151,12 @@ class TblQueue extends \yii\db\ActiveRecord
     public function getProfile()
     {
         return $this->hasOne(Profile::className(), ['user_id' => 'created_by']);
+    }
+
+    // แพทย์
+    public function getDoctor()
+    {
+        return $this->hasOne(TblDoctor::className(), ['doctor_id' => 'doctor_id']);
     }
 
     // คิวห้องตรวจหรือซักประวัติ

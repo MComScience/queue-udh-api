@@ -11,10 +11,11 @@ use yii\helpers\Html;
  *
  * @property int $profile_service_id รหัส
  * @property string $profile_service_name ชื่อโปรไฟล์
- * @property int $counter_id เคาท์เตอร์
+ * @property int $counter_id เคาท์เตอร์ที่ต้องการเรียก
  * @property string $service_id ชื่อบริการ
  * @property string $examination_id ห้องตรวจ
  * @property int $queue_service_id ประเภทคิวบริการ
+ * @property int $examination_counter_id เคาท์เตอร์ที่ต้องการออกบัตรคิว
  * @property int $profile_service_status สถานะ
  */
 class TblProfileService extends \yii\db\ActiveRecord
@@ -36,7 +37,7 @@ class TblProfileService extends \yii\db\ActiveRecord
     {
         return [
             [['profile_service_name', 'counter_id', 'service_id', 'queue_service_id', 'profile_service_status'], 'required'],
-            [['counter_id', 'queue_service_id', 'profile_service_status'], 'integer'],
+            [['counter_id', 'queue_service_id', 'examination_counter_id', 'profile_service_status'], 'integer'],
             [['service_id', 'examination_id'], 'safe'],
             [['profile_service_name'], 'string', 'max' => 100],
         ];
@@ -54,6 +55,7 @@ class TblProfileService extends \yii\db\ActiveRecord
             'service_id' => 'ชื่อบริการ',
             'examination_id' => 'ห้องตรวจ',
             'queue_service_id' => 'ประเภทคิวบริการ',
+            'examination_counter_id' => 'เคาท์เตอร์ที่ต้องการออกบัตรคิว',
             'profile_service_status' => 'สถานะ',
         ];
     }
@@ -86,6 +88,11 @@ class TblProfileService extends \yii\db\ActiveRecord
     public function getCounter()
     {
         return $this->hasOne(TblCounter::className(), ['counter_id' => 'counter_id']);
+    }
+
+    public function getExaminationCounter()
+    {
+        return $this->hasOne(TblCounter::className(), ['counter_id' => 'examination_counter_id']);
     }
 
     public function getServiceList()

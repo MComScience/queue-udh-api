@@ -13,6 +13,7 @@ use yii\helpers\ArrayHelper;
  * @property int $counter_service_sound เสียงเรียกบริการ
  * @property int $counter_service_no_sound เสียงเรียกหมายเลข
  * @property int $counter_id เคาท์เตอร์
+ * @property int $doctor_id แพทย์
  * @property int $counter_service_status สถานะ
  */
 class TblCounterService extends \yii\db\ActiveRecord
@@ -34,7 +35,7 @@ class TblCounterService extends \yii\db\ActiveRecord
     {
         return [
             [['counter_service_name', 'counter_service_no', 'counter_service_sound', 'counter_service_no_sound', 'counter_id', 'counter_service_status'], 'required'],
-            [['counter_service_no', 'counter_service_sound', 'counter_service_no_sound', 'counter_id', 'counter_service_status'], 'integer'],
+            [['counter_service_no', 'counter_service_sound', 'counter_service_no_sound', 'counter_id', 'doctor_id', 'counter_service_status'], 'integer'],
             [['counter_service_name'], 'string', 'max' => 255],
         ];
     }
@@ -51,6 +52,7 @@ class TblCounterService extends \yii\db\ActiveRecord
             'counter_service_sound' => 'เสียงเรียกบริการ',
             'counter_service_no_sound' => 'เสียงเรียกหมายเลข',
             'counter_id' => 'เคาน์เตอร์',
+            'doctor_id' => 'แพทย์',
             'counter_service_status' => 'สถานะ',
         ];
     }
@@ -71,6 +73,18 @@ class TblCounterService extends \yii\db\ActiveRecord
     public function getServiceNoSound()
     {
         return $this->hasOne(TblSound::className(), ['sound_id' => 'counter_service_no_sound']);
+    }
+
+    // แพทย์
+    public function getDoctor()
+    {
+        return $this->hasOne(TblDoctor::className(), ['doctor_id' => 'doctor_id']);
+    }
+
+    // ชื่อบริการ
+    public function getService()
+    {
+        return $this->hasOne(TblService::className(), ['service_id' => 'service_id']);
     }
 
     // สถานะการใช้งาน
