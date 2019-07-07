@@ -240,12 +240,14 @@ for (x = 0; x < i; x++) {
         colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
     }); */
-    JsBarcode("#barcode"+x, {$patient->hn}, {
-        format: "CODE128A",
-        width: 2,
-        height:100,
-        margin: 0
-    });
+    if($("#barcode"+x)){
+        JsBarcode("#barcode"+x, {$patient->hn}, {
+            format: "CODE128A",
+            width: 2,
+            height:100,
+            margin: 0
+        });
+    }
 }
 $('p[data-f-id="pbf"]').remove()
 $(window).on('load', function() {
