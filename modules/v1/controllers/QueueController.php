@@ -119,7 +119,9 @@ class QueueController extends ActiveController
                 'queue-play-list' => ['GET'],
                 'active-play-station' => ['GET'],
                 'get-services' => ['GET'],
-                'led-options' => ['GET']
+                'led-options' => ['GET'],
+                'check-register-ex' => ['POST'],
+                'update-queue' => ['POST'],
             ],
         ];
         // remove authentication filter
@@ -166,7 +168,7 @@ class QueueController extends ActiveController
                         'call-wait', 'data-wait-by-hn', 'end-wait', 'data-caller', 'recall', 'hold',
                         'data-hold', 'end', 'call-hold', 'end-hold', 'call-selected', 'register-examination',
                         'data-waiting-examination', 'data-caller-examination', 'data-hold-examination',
-                        'get-services'
+                        'get-services', 'check-register-ex', 'update-queue'
                     ],
                     'roles' => [
                         User::ROLE_ADMIN,
@@ -236,6 +238,7 @@ class QueueController extends ActiveController
                     'case_patient' => $params['case_patient'], // กรณีผู้ป่วย
                     'appoint' => $params['appoint'] === true || $params['appoint'] == 'true' ? 1 : 0, // คิวนัด
                     'queue_status_id' => TblQueue::STATUS_WAIT, // default รอเรียก
+                    'issue_card_ex' => 0, //สถานะออกบัตรคิวห้องตรวจ
                 ]);
 
                 if ($modelQueue->save()) {
@@ -706,6 +709,21 @@ class QueueController extends ActiveController
     {
         $params = \Yii::$app->getRequest()->getBodyParams();
         $data = AppQuery::getDataWaiting($params);
+        /* $result = [];
+        foreach ($data as $key => $queue) {
+            $doc_name = '-';
+            if($queue['appoint'] == 1) { // ถ้ามีนัด ให้หาชื่อแพทย์
+                $appoints = Json::decode(Json::decode($queue['appoints']));
+                if(is_array($appoints)) {
+                    $mapAppoint = ArrayHelper::map($appoints, 'dept_code', 'doc_name');
+                    $doc_name = ArrayHelper::getValue($mapAppoint, (string)$queue['service_code'], '-');
+                }
+                
+            }
+            $result[] = ArrayHelper::merge($queue, [
+                'doc_name' => $doc_name
+            ]);
+        } */
         $response = \Yii::$app->getResponse();
         $response->setStatusCode(200);
         return $data;
@@ -922,6 +940,13 @@ class QueueController extends ActiveController
             'caller_status' => TblCaller::STATUS_CALL_END // 1
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
+
+        $is_issue_ex = false; // สถานะว่าออกบัตรคิวห้องตรวจแล้วหรือยัง
+        if($modelServiceGroup['queue_service_id'] == 1) {// ถ้าเป็นคิวซักประวัติ
+            $count = AppQuery::checkRegisterEx($params['queue']);
+            $is_issue_ex = $count > 0;
+        }
+
         if ($modelCall->save() && $modelQueue->save()) {
             $queue = ArrayHelper::merge($params['queue'], [
                 'queue_status_id' => TblQueue::STATUS_END
@@ -931,7 +956,8 @@ class QueueController extends ActiveController
                 'event_on' => 'tbl_wait',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
-                'service' => $modelService
+                'service' => $modelService,
+                'is_issue_ex' => $is_issue_ex
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -1035,6 +1061,13 @@ class QueueController extends ActiveController
             'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
+
+        $is_issue_ex = false; // สถานะว่าออกบัตรคิวห้องตรวจแล้วหรือยัง
+        if($modelServiceGroup['queue_service_id'] == 1) {// ถ้าเป็นคิวซักประวัติ
+            $count = AppQuery::checkRegisterEx($params['queue']);
+            $is_issue_ex = $count > 0;
+        }
+
         if ($modelCall->save() && $modelQueue->save()) {
             $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
             $params['queue']['counter_id'] = $modelCall['counter_id'];
@@ -1048,7 +1081,8 @@ class QueueController extends ActiveController
                 'event_on' => 'tbl_caller',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
-                'service' => $modelService
+                'service' => $modelService,
+                'is_issue_ex' => $is_issue_ex
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -1116,6 +1150,13 @@ class QueueController extends ActiveController
             'caller_status' => TblCaller::STATUS_CALL_END // สถานะกำลังเรียก 0
         ]);
         $modelQueue->queue_status_id = TblQueue::STATUS_END;
+
+        $is_issue_ex = false; // สถานะว่าออกบัตรคิวห้องตรวจแล้วหรือยัง
+        if($modelServiceGroup['queue_service_id'] == 1) {// ถ้าเป็นคิวซักประวัติ
+            $count = AppQuery::checkRegisterEx($params['queue']);
+            $is_issue_ex = $count > 0;
+        }
+
         if ($modelCall->save() && $modelQueue->save()) {
             $params['queue']['queue_status_id'] = $modelQueue['queue_status_id'];
             $params['queue']['end_time'] = $modelCall['end_time'];
@@ -1130,7 +1171,8 @@ class QueueController extends ActiveController
                 'event_on' => 'tbl_hold',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
-                'service' => $modelService
+                'service' => $modelService,
+                'is_issue_ex' => $is_issue_ex
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -1213,7 +1255,9 @@ class QueueController extends ActiveController
             $modelPatient->appoint = $oldPatient['appoint'];
             $modelPatient->maininscl_name = $oldPatient['maininscl_name'];
             $modelPatient->subinscl_name = $oldPatient['subinscl_name'];
-            if($modelPatient->save()) {
+
+            $oldQueue->issue_card_ex = 1; // สถานะออกบัตรคิวห้องตรวจ
+            if($modelPatient->save() && $oldQueue->save()) {
                 // ถ้ามีรูปภาพเดิมจากคิวซักประวัติ ให้สร้าง record ใหม่
                 if($modelStorage){
                     $modelStorage->id = null;
@@ -1235,6 +1279,7 @@ class QueueController extends ActiveController
                     'parent_id' => $oldQueue['queue_id'], // ออกคิวจาก
                     'doctor_id' => $counterService['doctor_id'], // แพทย์
                     'queue_status_id' => TblQueue::STATUS_WAIT, // default รอเรียก
+                    'issue_card_ex' => 0
                 ]);
                 if ($modelQueue->save()) {
                     $doctor = TblDoctor::findOne($modelQueue['doctor_id']);
@@ -1312,6 +1357,21 @@ class QueueController extends ActiveController
             $transaction->rollBack();
             $logger->error('ออกบัตรคิวห้องตรวจ', ['msg' => $e]);
             throw $e;
+        }
+    }
+
+    public function actionCheckRegisterEx()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $count = AppQuery::checkRegisterEx($params['queue']);
+        if($count > 0) {
+            return [
+                'status' => true
+            ];
+        } else {
+            return [
+                'status' => false
+            ];
         }
     }
 
@@ -1612,5 +1672,28 @@ class QueueController extends ActiveController
     public function actionLedOptions()
     {
         return AppQuery::getLedOptions();
+    }
+
+    public function actionUpdateQueue()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $modelQueue = $this->findModelQueue($params['queue_id']);
+        $modelService = $this->findModelService($params['service_id']);
+        if($modelQueue['service_id'] != $params['service_id']) { // ถ้าไม่ใช่แผนกเดิม
+            $modelQueue->service_id = $params['service_id'];
+            $modelQueue->queue_no = $modelQueue->generateNumber();
+            $params['queue_no'] = $modelQueue->queue_no;
+        }
+        $modelQueue->load($params, '');
+        $modelQueue->service_group_id = $modelService['service_group_id'];
+        if($modelQueue->validate() && $modelQueue->save()) {
+            return [
+                'message' => 'บันทึกสำเร็จ!',
+                'model' => $modelQueue
+            ];
+        } else {
+            // Validation error
+            throw new HttpException(422, Json::encode($modelQueue->errors));
+        }
     }
 }

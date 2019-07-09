@@ -122,7 +122,8 @@ class SettingsController extends ActiveController
                 'update-display' => ['GET', 'POST'],
                 'delete-display' => ['DELETE'],
                 'auto-number-list' => ['GET'],
-                'update-auto-number' => ['POST']
+                'update-auto-number' => ['POST'],
+                'counter-service-doctor-options' => ['GET'],
             ],
         ];
         // remove authentication filter
@@ -163,7 +164,7 @@ class SettingsController extends ActiveController
                         'update-profile-service', 'counter-list', 'create-counter', 'update-counter', 'counter-service-list',
                         'create-counter-service', 'update-counter-service', 'counter-service-options', 'play-station-list',
                         'create-play-station', 'update-play-station', 'play-station-options', 'display-list', 'display-options',
-                        'create-display', 'update-display', 'auto-number-list', 'update-auto-number'
+                        'create-display', 'update-display', 'auto-number-list', 'update-auto-number', 'counter-service-doctor-options'
                     ],
                     'roles' => ['@'],
                 ],
@@ -995,6 +996,24 @@ class SettingsController extends ActiveController
             // Validation error
             throw new HttpException(422, Json::encode($model->errors));
         }
+    }
+
+    public function actionCounterServiceDoctorOptions()
+    {
+        $rows = (new \yii\db\Query())
+            ->select([
+                'tbl_counter_service.counter_service_id',
+                'tbl_counter_service.counter_service_name',
+                'tbl_counter.counter_name',
+                'tbl_doctor.doctor_name',
+                'tbl_counter_service.doctor_id',
+                'tbl_doctor.doctor_title'
+            ])
+            ->from('tbl_counter_service')
+            ->innerJoin('tbl_counter', 'tbl_counter.counter_id = tbl_counter_service.counter_id')
+            ->innerJoin('tbl_doctor', 'tbl_doctor.doctor_id = tbl_counter_service.doctor_id')
+            ->all();
+        return $rows;
     }
 
     private function mapDataOptions($options)

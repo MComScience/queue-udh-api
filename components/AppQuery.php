@@ -187,20 +187,23 @@ class AppQuery
     {
         $query = (new Query())
             ->select([
-                'tbl_queue.queue_id',
-                'tbl_queue.queue_no',
-                'tbl_queue.queue_status_id',
+                'tbl_queue.*',
                 'tbl_queue.created_at as created_time',
                 'tbl_patient.hn',
                 'tbl_patient.fullname',
+                'tbl_patient.appoint as appoints',
                 'tbl_service.service_name',
                 'file_storage_item.base_url',
                 'file_storage_item.path',
-                '`profile`.`name`'
+                '`profile`.`name`',
+                'tbl_service_group.service_group_name',
+                'tbl_service_group.queue_service_id',
+                'tbl_service.service_code',
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
             ->innerJoin('tbl_service', 'tbl_service.service_id = tbl_queue.service_id')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
             ->leftJoin('file_storage_item', 'file_storage_item.ref_id = tbl_patient.patient_id')
             ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
             ->andWhere(['between', 'tbl_queue.created_at', $params['startDate'], $params['endDate']])
@@ -222,6 +225,7 @@ class AppQuery
                 'tbl_patient.hn',
                 'CASE WHEN tbl_patient.cid IS NULL OR tbl_patient.cid = \'\' THEN NULL ELSE CONCAT(SUBSTRING(tbl_patient.cid, 1, 9), \'****\') END AS cid',
                 'tbl_patient.fullname',
+                'tbl_patient.appoint as appoints',
                 'tbl_queue.queue_status_id',
                 'tbl_patient.maininscl_name',
                 'tbl_queue.priority_id',
@@ -232,13 +236,15 @@ class AppQuery
                 'tbl_queue.queue_station',
                 'tbl_queue.case_patient',
                 'tbl_queue.appoint',
+                'tbl_queue.issue_card_ex',
                 'file_storage_item.base_url',
                 'file_storage_item.path',
                 'tbl_service.service_code',
                 'tbl_service.service_name',
                 'tbl_service_group.service_group_name',
                 'tbl_queue_service.queue_service_name',
-                '`profile`.`name`'
+                '`profile`.`name`',
+                'tbl_queue_status.queue_status_name'
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
@@ -247,6 +253,7 @@ class AppQuery
             ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
             ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
             ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
+            ->innerJoin('tbl_queue_status', 'tbl_queue_status.queue_status_id = tbl_queue.queue_status_id')
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_WAIT,
                 'tbl_queue.service_id' => $params['serviceIds'],
@@ -347,6 +354,7 @@ class AppQuery
                 'tbl_patient.fullname',
                 'tbl_queue.queue_status_id',
                 'tbl_patient.maininscl_name',
+                'tbl_patient.appoint as appoints',
                 'tbl_queue.priority_id',
                 'tbl_queue.created_at',
                 'tbl_queue.service_group_id',
@@ -354,6 +362,7 @@ class AppQuery
                 'tbl_queue.queue_station',
                 'tbl_queue.case_patient',
                 'tbl_queue.appoint',
+                'tbl_queue.issue_card_ex',
                 'file_storage_item.base_url',
                 'file_storage_item.path',
                 'tbl_service.service_code',
@@ -368,7 +377,8 @@ class AppQuery
                 'tbl_counter_service.counter_service_name',
                 'tbl_caller.counter_service_id',
                 'tbl_caller.counter_id',
-                '`profile`.name'
+                '`profile`.name',
+                'tbl_queue_status.queue_status_name'
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
@@ -379,6 +389,7 @@ class AppQuery
             ->innerJoin('tbl_caller', 'tbl_caller.queue_id = tbl_queue.queue_id')
             ->innerJoin('tbl_counter_service', 'tbl_counter_service.counter_service_id = tbl_caller.counter_service_id')
             ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
+            ->innerJoin('tbl_queue_status', 'tbl_queue_status.queue_status_id = tbl_queue.queue_status_id')
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_CALL, // สถานะเรียก
                 'tbl_queue.service_id' => $params['serviceIds'], // ชื่อบริการ
@@ -408,6 +419,7 @@ class AppQuery
                 'tbl_patient.fullname',
                 'tbl_queue.queue_status_id',
                 'tbl_patient.maininscl_name',
+                'tbl_patient.appoint as appoints',
                 'tbl_queue.priority_id',
                 'tbl_queue.created_at',
                 'tbl_queue.service_group_id',
@@ -415,6 +427,7 @@ class AppQuery
                 'tbl_queue.queue_station',
                 'tbl_queue.case_patient',
                 'tbl_queue.appoint',
+                'tbl_queue.issue_card_ex',
                 'file_storage_item.base_url',
                 'file_storage_item.path',
                 'tbl_service.service_code',
@@ -440,6 +453,7 @@ class AppQuery
             ->innerJoin('tbl_caller', 'tbl_caller.queue_id = tbl_queue.queue_id')
             ->innerJoin('tbl_counter_service', 'tbl_counter_service.counter_service_id = tbl_caller.counter_service_id')
             ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
+            ->innerJoin('tbl_queue_status', 'tbl_queue_status.queue_status_id = tbl_queue.queue_status_id')
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_HOLD, // สถานะพักคิว
                 'tbl_queue.service_id' => $params['serviceIds'], // ชื่อบริการ
@@ -671,6 +685,7 @@ class AppQuery
                 'tbl_service.service_order',
                 'tbl_service.service_status',
                 'tbl_service_group.service_group_name',
+                'tbl_service_group.queue_service_id',
                 'tbl_card.card_name',
                 'tbl_prefix.prefix_code',
                 'tbl_floor.*'
@@ -1009,5 +1024,22 @@ class AppQuery
             ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
             ->all();
         return $services;
+    }
+
+    public static function checkRegisterEx($queueId)
+    {
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
+        $count = (new \yii\db\Query())
+            ->select([
+                'tbl_queue.*'
+            ])
+            ->from('tbl_queue')
+            ->where([
+                'tbl_queue.parent_id' => $queueId
+            ])
+            ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
+            ->count();
+        return $count;
     }
 }

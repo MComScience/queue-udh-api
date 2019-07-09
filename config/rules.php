@@ -128,6 +128,10 @@ return [
             'OPTIONS get-services' => 'options',
             'GET led-options' => 'led-options',
             'OPTIONS led-options' => 'options',
+            'POST check-register-ex' => 'check-register-ex',
+            'OPTIONS check-register-ex' => 'options',
+            'POST update-queue' => 'update-queue',
+            'OPTIONS update-queue' => 'options',
         ]
     ],
     [
@@ -273,6 +277,8 @@ return [
             'OPTIONS auto-number-list' => 'options',
             'POST update-auto-number' => 'update-auto-number',
             'OPTIONS update-auto-number' => 'options',
+            'GET counter-service-doctor-options' => 'counter-service-doctor-options',
+            'OPTIONS counter-service-doctor-options' => 'options',
         ]
     ],
 ];

@@ -41,6 +41,7 @@ class TblQueue extends \yii\db\ActiveRecord
     const STATUS_CALL = 2; // กำลังเรียก
     const STATUS_HOLD = 3; // พักคิว
     const STATUS_END = 4; // เสร็จสิ้น
+    const STATUS_WAIT_EX = 5; // รอเรียกห้องตรวจ
 
     /**
      * {@inheritdoc}
@@ -87,7 +88,7 @@ class TblQueue extends \yii\db\ActiveRecord
     {
         return [
             [['patient_id', 'service_group_id', 'service_id', 'priority_id', 'queue_station', 'case_patient', 'queue_status_id', 'appoint'], 'required'],
-            [['patient_id', 'service_group_id', 'service_id', 'priority_id', 'queue_station', 'case_patient', 'queue_status_id', 'appoint', 'parent_id', 'doctor_id', 'created_by', 'updated_by'], 'integer'],
+            [['patient_id', 'service_group_id', 'service_id', 'priority_id', 'queue_station', 'case_patient', 'queue_status_id', 'appoint', 'parent_id', 'doctor_id', 'issue_card_ex', 'created_by', 'updated_by'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
             [['queue_no'], 'string', 'max' => 100],
         ];
@@ -111,6 +112,7 @@ class TblQueue extends \yii\db\ActiveRecord
             'appoint' => 'คิวนัด',
             'parent_id' => 'ออกคิวจาก', // เฉพาะคิวห้องตรวจ
             'doctor_id' => 'แพทย์',
+            'issue_card_ex' => 'สถานะออกบัตรคิวห้องตรวจ',
             'created_at' => 'วันที่บันทึก',
             'updated_at' => 'วันที่แก้ไข',
             'created_by' => 'ผู้บันทึก',
@@ -198,7 +200,7 @@ class TblQueue extends \yii\db\ActiveRecord
         return ArrayHelper::getValue($cases, $this->case_patient, '');
     }
 
-    private function generateNumber()
+    public function generateNumber()
     {
         $service = $this->findModelService($this->service_id); // ชื่อบริการ
         $modelPrefix = $this->findModelPrefix($service['prefix_id']); // ข้อมูลตัวอักหน้าเลขคิว
