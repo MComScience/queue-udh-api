@@ -1281,10 +1281,12 @@ class QueueController extends ActiveController
                 }
                 // ข้อมูลคิว
                 $modelQueue = new TblQueue();
+                $modelQueue->service_id = $modelService['service_id'];
+                $modelQueue->service_group_id = $modelServiceGroup['service_group_id'];
                 $modelQueue->setAttributes([
                     'patient_id' => $modelPatient['patient_id'], // ไอดีผู้ป่วย
-                    'service_group_id' => $modelServiceGroup['service_group_id'], // กลุ่มบริการ
-                    'service_id' => $modelService['service_id'], // ชื่อบริการ
+                    //'service_group_id' => $modelServiceGroup['service_group_id'], // กลุ่มบริการ
+                    //'service_id' => $modelService['service_id'], // ชื่อบริการ
                     'priority_id' => $oldQueue['priority_id'], // ประเภทคิว
                     'queue_station' => $oldQueue['queue_station'], // ออกคิวจากตู้หรือ one stop
                     'case_patient' => $oldQueue['case_patient'], // กรณีผู้ป่วย
