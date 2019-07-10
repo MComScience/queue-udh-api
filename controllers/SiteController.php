@@ -248,7 +248,7 @@ class SiteController extends Controller
             '{qtype}' => $model->getCasePatientName(),
             '{priority}' => $model->getPriorityName(),
             '{doc_name}' => $doc_name,
-            '{doc_name2}' => $doctor ? $doctor->fullname : '-'
+            '{doc_name2}' => $doctor ? $doctor['doctor_name'] : '-'
         ]);
         $i = !empty($service['print_copy_qty']) ? $service['print_copy_qty'] : 1; // จำนวน copy
         $template = '';
