@@ -217,7 +217,7 @@ class SiteController extends Controller
         $service = $this->findModelService($model['service_id']);
         $modelCard = $this->findModelCard($service['card_id']);
         $service_code = !empty($service['service_code']) ? $service['service_code'] : '-';
-        $doctor = TblDoctor::findOne($model['queue_id']);
+        $doctor = TblDoctor::findOne($model['doctor_id']);
         
         $doc_name = '-';
         if(!empty($modelPatient['appoint']) && ((string)$model['appoint'] == '1')) {
