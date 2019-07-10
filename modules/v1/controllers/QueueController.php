@@ -800,6 +800,12 @@ class QueueController extends ActiveController
         if(TblCaller::findOne(['queue_id' => $modelQueue['queue_id']]) !== null){
             throw new HttpException(422, 'คิวนี้ถูกเรียกไปแล้ว');
         }
+        if($modelServiceGroup['queue_service_id'] == 2) { // ถ้าเรียกคิวจากห้องตรวจ ให้ตรวจสอบว่าคิวซักประวัติเสร็จสิ้นหรือยัง
+            $modelQueueHistory = $this->findModelQueue($modelQueue['parent_id']); // คิวซักประวัติที่ออกบัตรคิวมาให้
+            if($modelQueueHistory['queue_status_id'] != TblQueue::STATUS_END) {
+                throw new HttpException(422, 'ไม่สามารถเรียกคิวได้ เนื่องจากสถานะซักประวัติยังไม่เสร็จสิ้น!');
+            }
+        }
         $modelCall = new TblCaller();
         $modelCall->setAttributes([
             'queue_id' => $params['queue']['queue_id'], // รหัสคิว
@@ -861,6 +867,13 @@ class QueueController extends ActiveController
                 $modelServiceGroup = $this->findModelServiceGroup($modelService['service_group_id']); // กลุ่มบริการ
                 if(TblCaller::findOne(['queue_id' => $modelQueue['queue_id']]) !== null){
                     continue;
+                }
+                if($modelServiceGroup['queue_service_id'] == 2) { // ถ้าเรียกคิวจากห้องตรวจ ให้ตรวจสอบว่าคิวซักประวัติเสร็จสิ้นหรือยัง
+                    $modelQueueHistory = $this->findModelQueue($modelQueue['parent_id']); // คิวซักประวัติที่ออกบัตรคิวมาให้
+                    if($modelQueueHistory['queue_status_id'] != TblQueue::STATUS_END) {
+                        $transaction->rollBack();
+                        throw new HttpException(422, 'ไม่สามารถเรียกคิวได้ เนื่องจากสถานะซักประวัติยังไม่เสร็จสิ้น!');
+                    }
                 }
                 $modelCall = new TblCaller();
                 $modelCall->setAttributes([
