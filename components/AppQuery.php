@@ -457,7 +457,7 @@ class AppQuery
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_HOLD, // สถานะพักคิว
                 'tbl_queue.service_id' => $params['serviceIds'], // ชื่อบริการ
-                'tbl_caller.counter_service_id' => $params['counter_service_id'], // ช่องบริการ
+                //'tbl_caller.counter_service_id' => $params['counter_service_id'], // ช่องบริการ
                 'tbl_service_group.queue_service_id' => 1 // ประเภทคิวซักประวัติ
             ])
             ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])
@@ -500,7 +500,15 @@ class AppQuery
                 'tbl_queue_service.queue_service_name',
                 '`profile`.`name`',
                 'tbl_doctor.doctor_title',
-                'CONCAT( IFNULL( tbl_doctor.doctor_title, \'\' ), \' \', tbl_doctor.doctor_name ) AS doctor_name'
+                'CONCAT( IFNULL( tbl_doctor.doctor_title, \'\' ), \' \', tbl_doctor.doctor_name ) AS doctor_name',
+                'tbl_caller.caller_id',
+                'tbl_caller.call_time',
+                'tbl_caller.hold_time',
+                'tbl_caller.end_time',
+                'tbl_caller.caller_status',
+                'tbl_counter_service.counter_service_name',
+                'tbl_caller.counter_service_id',
+                'tbl_caller.counter_id'
             ])
             ->from('tbl_queue')
             ->innerJoin('tbl_patient', 'tbl_patient.patient_id = tbl_queue.patient_id')
@@ -510,9 +518,12 @@ class AppQuery
             ->innerJoin('tbl_queue_service', 'tbl_queue_service.queue_service_id = tbl_service_group.queue_service_id')
             ->innerJoin('`profile`', '`profile`.user_id = tbl_queue.created_by')
             ->leftJoin('tbl_doctor', 'tbl_doctor.doctor_id = tbl_queue.doctor_id')
+            ->innerJoin('tbl_caller', 'tbl_caller.queue_id = tbl_queue.queue_id')
+            ->innerJoin('tbl_counter_service', 'tbl_counter_service.counter_service_id = tbl_caller.counter_service_id')
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_WAIT,
                 'tbl_queue.service_id' => $params['serviceIds'],
+                'tbl_caller.counter_service_id' => $params['counterServiceIds'],
                 'tbl_service_group.queue_service_id' => 2 // ประเภทคิวห้องตรวจ
             ])
             ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
@@ -636,7 +647,7 @@ class AppQuery
             ->where([
                 'tbl_queue.queue_status_id' => TblQueue::STATUS_HOLD,
                 'tbl_queue.service_id' => $params['serviceIds'],
-                'tbl_caller.counter_service_id' => $params['counterServiceIds'],
+                // 'tbl_caller.counter_service_id' => $params['counterServiceIds'],
                 'tbl_service_group.queue_service_id' => 2 // ประเภทคิวห้องตรวจ
             ])
             ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])

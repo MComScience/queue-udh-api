@@ -16,6 +16,7 @@ use app\modules\v1\models\TblQueue;
 use app\modules\v1\models\TblQueueFailed;
 use app\modules\v1\models\TblService;
 use app\modules\v1\models\TblDoctor;
+use app\modules\v1\models\TblCaller;
 use yii\web\NotFoundHttpException;
 use yii\helpers\ArrayHelper;
 
@@ -234,6 +235,16 @@ class SiteController extends Controller
             }
         }
 
+        // คิวห้องตรวจ
+        $counter = '-';
+        if(!empty($model['parent_id'])) {
+            $modelCaller = TblCaller::findOne(['queue_id' => $id]);
+            if(!$modelCaller) {
+                $modelCounterService = $this->findModelCounterService($modelCaller['counter_service_id']);
+                $counter = $modelCounterService['counter_service_name'];
+            }
+        }
+
         $card_template = strtr($modelCard['card_template'],[
             '{hn}' => $modelPatient['hn'],
             '{vn}' => $modelPatient['vn'],
@@ -248,7 +259,8 @@ class SiteController extends Controller
             '{qtype}' => $model->getCasePatientName(),
             '{priority}' => $model->getPriorityName(),
             '{doc_name}' => $doc_name,
-            '{doc_name2}' => $doctor ? $doctor['doctor_name'] : '-'
+            '{doc_name2}' => $doctor ? $doctor['doctor_name'] : '-',
+            '{counter}' => $counter
         ]);
         $i = !empty($service['print_copy_qty']) ? $service['print_copy_qty'] : 1; // จำนวน copy
         $template = '';

@@ -132,6 +132,10 @@ return [
             'OPTIONS check-register-ex' => 'options',
             'POST update-queue' => 'update-queue',
             'OPTIONS update-queue' => 'options',
+            'POST call-wait-ex' => 'call-wait-ex',
+            'OPTIONS call-wait-ex' => 'options',
+            'POST call-selected-ex' => 'call-selected-ex',
+            'OPTIONS call-selected-ex' => 'options',
         ]
     ],
     [

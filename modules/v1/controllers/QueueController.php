@@ -122,6 +122,8 @@ class QueueController extends ActiveController
                 'led-options' => ['GET'],
                 'check-register-ex' => ['POST'],
                 'update-queue' => ['POST'],
+                'call-wait-ex' => ['POST'],
+                'call-selected-ex' => ['POST'],
             ],
         ];
         // remove authentication filter
@@ -168,7 +170,7 @@ class QueueController extends ActiveController
                         'call-wait', 'data-wait-by-hn', 'end-wait', 'data-caller', 'recall', 'hold',
                         'data-hold', 'end', 'call-hold', 'end-hold', 'call-selected', 'register-examination',
                         'data-waiting-examination', 'data-caller-examination', 'data-hold-examination',
-                        'get-services', 'check-register-ex', 'update-queue'
+                        'get-services', 'check-register-ex', 'update-queue', 'call-wait-ex', 'call-selected-ex'
                     ],
                     'roles' => [
                         User::ROLE_ADMIN,
@@ -275,6 +277,8 @@ class QueueController extends ActiveController
                         'service_code' => $modelService['service_code'],
                         'print_time' => Yii::$app->formatter->asDate($modelQueue['created_at'], 'php:Y-m-d H:i:s'),
                         'service_group_name' => $modelServiceGroup['service_group_name'],
+                        'issue_card_ex' => $modelQueue['issue_card_ex'],
+                        'parent_id' => $modelQueue['parent_id']
                     ];
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();
@@ -283,6 +287,7 @@ class QueueController extends ActiveController
                         'queue' => $queue, // ข้อมูลคิว
                         'patient' => $modelPatient, // ข้อมูลผู้ป่วย
                         'service' => $modelService, // ข้อมูลบริการ
+                        'serviceGroup' => $modelServiceGroup,
                         'group' => $modelServiceGroup, // ข้อมูลกลุ่มบริการ
                         'imgUrl' => $imgUrl // ลิ้งค์ภาพโปรไฟล์
                     ];
@@ -846,6 +851,60 @@ class QueueController extends ActiveController
         }
     }
 
+    // เรียกคิวห้องตรวจ
+    public function actionCallWaitEx()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $modelQueue = $this->findModelQueue($params['queue']['queue_id']);
+        $modelQueueHistory = $this->findModelQueue($modelQueue['parent_id']); // คิวซักประวัติที่ออกบัตรคิวมาให้
+        if($modelQueueHistory['queue_status_id'] != TblQueue::STATUS_END) {
+            throw new HttpException(422, 'ไม่สามารถเรียกคิวได้ เนื่องจากสถานะซักประวัติยังไม่เสร็จสิ้น!');
+        }
+        
+        $modelService = $this->findModelService($modelQueue['service_id']); // บริการ
+        $modelServiceGroup = $this->findModelServiceGroup($modelService['service_group_id']); // กลุ่มบริการ
+        $modelCounterService = $this->findModelCounterService($params['counter_service']['key']);
+        
+        $modelCall = TblCaller::findOne(['queue_id' => $modelQueue['queue_id']]);
+        $modelCall->setAttributes([
+            'queue_id' => $params['queue']['queue_id'], // รหัสคิว
+            'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+            'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
+            'profile_service_id' => $params['profileService']['profile_service_id'], // โปรไฟล์เซอร์วิส
+            'call_time' => Enum::currentDate(), // เวลาเรียก
+            'group_key' => $modelCall->getGroupKey(), // กลุ่มคิว
+            'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
+        ]);
+        $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
+        if ($modelCall->save() && $modelQueue->save()) {
+            $callers = AppQuery::getCallerByGroupkey($modelCall['group_key']);
+            $queue = ArrayHelper::merge($params['queue'], [
+                'queue_status_id' => TblQueue::STATUS_CALL,
+                'counter_id' => $modelCall['counter_id'],
+                'counter_service_id' => $modelCall['counter_service_id'],
+                'counter_service_name' => $modelCounterService['counter_service_name'],
+                'counter_service_no' => $modelCounterService['counter_service_no'],
+                'call_time' => $modelCall['call_time']
+            ]);
+            $params['queue'] = $queue;
+            return ArrayHelper::merge($params, [
+                'sources' => [
+                    'urls' => $this->getSourceMediaFiles($modelQueue['queue_no'], $params['counter_service']['key']),
+                    'title' => $queue['hn'],
+                    'artist' => $queue['fullname'],
+                    'pic' => Url::base(true).'/images/cbimage.jpg'
+                ],
+                'event_on' => 'tbl_wait',
+                'caller' => $modelCall,
+                'group' => $modelServiceGroup,
+                'service' => $modelService,
+                'call_groups' => ArrayHelper::getColumn($callers, 'queue_no')
+            ]);
+        } else {
+            throw new HttpException(422, Json::encode($modelCall->errors));
+        }
+    }
+
     // เรียกคิวที่เลือก
     public function actionCallSelected()
     {
@@ -927,8 +986,84 @@ class QueueController extends ActiveController
             $transaction->rollBack();
             throw $e;
         }
+    }
 
-
+    // เรียกคิวห้องตรวจที่เลือก
+    public function actionCallSelectedEx()
+    {
+        $response = [];
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $queues = $params['queues'];
+        $modelCounterService = $this->findModelCounterService($params['counter_service']['key']);
+        $groupKey = \Yii::$app->security->generateRandomString();
+        $group_queue_no = [];
+        foreach ($queues as $key => $queue) {
+            $group_queue_no[] = $queue['queue_no'];
+        }
+        $transaction = TblCaller::getDb()->beginTransaction();
+        try {
+            foreach ($queues as $key => $queue) {
+                # code...
+                $modelQueue = $this->findModelQueue($queue['queue_id']);
+                $modelQueueHistory = $this->findModelQueue($modelQueue['parent_id']); // คิวซักประวัติที่ออกบัตรคิวมาให้
+                if($modelQueueHistory['queue_status_id'] != TblQueue::STATUS_END) {
+                    $transaction->rollBack();
+                    throw new HttpException(422, 'ไม่สามารถเรียกคิวได้ เนื่องจากสถานะซักประวัติยังไม่เสร็จสิ้น!');
+                }
+                $modelService = $this->findModelService($modelQueue['service_id']); // บริการ
+                $modelServiceGroup = $this->findModelServiceGroup($modelService['service_group_id']); // กลุ่มบริการ
+                $modelCall = TblCaller::findOne(['queue_id' => $modelQueue['queue_id']]);
+                $modelCall->setAttributes([
+                    'queue_id' => $queue['queue_id'], // รหัสคิว
+                    'counter_id' => $params['counter']['counter_id'], // รหัสเคาน์เตอร์
+                    'counter_service_id' => $params['counter_service']['key'], // รหัสช่องบริการ
+                    'call_time' => Enum::currentDate(), // เวลาเรียก
+                    'profile_service_id' => $params['profileService']['profile_service_id'], // โปรไฟล์เซอร์วิส
+                    'group_key' => $groupKey, // กลุ่มคิว
+                    'caller_status' => TblCaller::STATUS_CALL // สถานะกำลังเรียก 0
+                ]);
+                $modelQueue->queue_status_id = TblQueue::STATUS_CALL;
+                if ($modelCall->save() && $modelQueue->save()) {
+                    $queue = ArrayHelper::merge($queue, [
+                        'queue_status_id' => TblQueue::STATUS_CALL,
+                        'counter_id' => $modelCall['counter_id'],
+                        'counter_service_id' => $modelCall['counter_service_id'],
+                        'counter_service_name' => $modelCounterService['counter_service_name'],
+                        'counter_service_no' => $modelCounterService['counter_service_no'],
+                        'call_time' => $modelCall['call_time']
+                    ]);
+                    $response[] = [
+                        'counter' => $params['counter'],
+                        'counter_service' => $params['counter_service'],
+                        'profile_service' => $params['profileService'],
+                        'queue' => $queue,
+                        'sources' => [
+                            'urls' => $this->getSourceMediaFiles($modelQueue['queue_no'], $params['counter_service']['key']),
+                            'title' => $queue['hn'],
+                            'artist' => $queue['fullname'],
+                            'pic' => Url::base(true).'/images/cbimage.jpg'
+                        ],
+                        'event_on' => 'tbl_wait',
+                        'caller' => $modelCall,
+                        'group' => $modelServiceGroup,
+                        'service' => $modelService,
+                        'call_groups' => $group_queue_no
+                    ];
+                } else {
+                    $transaction->rollBack();
+                    throw new HttpException(422, Json::encode($modelCall->errors));
+                }
+            }
+            // ...other DB operations...
+            $transaction->commit();
+            return $response;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
     }
 
     // เสร็จสิ้นคิว กำลังรอเรียก
@@ -1270,6 +1405,7 @@ class QueueController extends ActiveController
             $modelPatient->subinscl_name = $oldPatient['subinscl_name'];
 
             $oldQueue->issue_card_ex = 1; // สถานะออกบัตรคิวห้องตรวจ
+
             if($modelPatient->save() && $oldQueue->save()) {
                 // ถ้ามีรูปภาพเดิมจากคิวซักประวัติ ให้สร้าง record ใหม่
                 if($modelStorage){
@@ -1297,6 +1433,23 @@ class QueueController extends ActiveController
                     'issue_card_ex' => 0
                 ]);
                 if ($modelQueue->save()) {
+                    $modelCounterService = $this->findModelCounterService($params['counter_service_id']);
+                    $modelCall = new TblCaller();
+                    $modelCall->setAttributes([
+                        'queue_id' => $modelQueue['queue_id'], // รหัสคิว
+                        'counter_id' => $modelCounterService['counter_id'], // รหัสเคาน์เตอร์
+                        'counter_service_id' => $modelCounterService['counter_service_id'], // รหัสช่องบริการ
+                        'profile_service_id' => $params['profileService']['profile_service_id'], // โปรไฟล์เซอร์วิส
+                        // 'call_time' => Enum::currentDate(), // เวลาเรียก
+                        'group_key' => $modelCall->getGroupKey(), // กลุ่มคิว
+                        'caller_status' => TblCaller::STATUS_CALL_END // เรียกเสร็จ
+                    ]);
+
+                    if(!$modelCall->save()) {
+                        $transaction->rollBack();
+                        throw new HttpException(422, Json::encode($modelCall->errors));
+                    }
+
                     $doctor = TblDoctor::findOne($modelQueue['doctor_id']);
                     $queue = [
                         'queue_id' => $modelQueue['queue_id'],
@@ -1324,15 +1477,25 @@ class QueueController extends ActiveController
                         'base_url' => $modelStorage ? $modelStorage['base_url'] : '',
                         'path' => $modelStorage ? $modelStorage['path'] : '',
                         'queue_service_name' => $modelQueueService['queue_service_name'],
-                        'doctor_name' => $doctor ? $doctor->fullname : '-'
+                        'doctor_name' => $doctor ? $doctor->fullname : '-',
+                        'issue_card_ex' => $modelQueue['issue_card_ex'],
+                        'parent_id' => $modelQueue['parent_id'],
+                        'counter_id' => $modelCall['counter_id'],
+                        'counter_service_id' => $modelCall['counter_service_id'],
+                        'counter_service_name' => $modelCounterService['counter_service_name'],
+                        'counter_service_no' => $modelCounterService['counter_service_no'],
+                        'doctor_id' => $modelQueue['doctor_id'] // แพทย์
                     ];
+                    $params['queue']['issue_card_ex'] = '1';
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();
                     $response->setStatusCode(201);
                     return [
                         'queue' => $queue, // ข้อมูลคิว
+                        'oldQueue' => $params['queue'],
                         'patient' => $modelPatient, // ข้อมูลผู้ป่วย
                         'service' => $modelService, // ข้อมูลบริการ
+                        'serviceGroup' => $modelServiceGroup,
                         'group' => $modelServiceGroup, // ข้อมูลกลุ่มบริการ
                         'imgUrl' => $imgUrl // ลิ้งค์ภาพโปรไฟล์
                     ];
