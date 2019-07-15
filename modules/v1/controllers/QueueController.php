@@ -1330,20 +1330,20 @@ class QueueController extends ActiveController
     // ไฟล์เสียงเรียก
     protected function getSourceMediaFiles($number, $counter_service_id)
     {
-        $cache = \Yii::$app->cache;
+        /* $cache = \Yii::$app->cache;
         $source = $cache->get('S_'.$number);
-        if ($source === false) {
-            $component = \Yii::createObject([
-                'class' => SoundComponent::className(),
-                'number' => $number,
-                'counter_service_id' => $counter_service_id
-            ]);
-            $source = $component->getSource();
-            $cache->set('S_'.$number, $source, 3600*3);
+        if ($source === false) { */
+        $component = \Yii::createObject([
+            'class' => SoundComponent::className(),
+            'number' => $number,
+            'counter_service_id' => $counter_service_id
+        ]);
+        $source = $component->getSource();
+        // $cache->set('S_'.$number, $source, 3600*3);
+        return $source;
+        /* } else {
             return $source;
-        } else {
-            return $source;
-        }
+        } */
     }
 
     // ออกบัตรคิวห้องตรวจ
