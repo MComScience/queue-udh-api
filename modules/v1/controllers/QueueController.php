@@ -1073,7 +1073,7 @@ class QueueController extends ActiveController
         $modelQueue = $this->findModelQueue($params['queue']['queue_id']);
         $modelService = $this->findModelService($modelQueue['service_id']); // บริการ
         $modelServiceGroup = $this->findModelServiceGroup($modelService['service_group_id']); // กลุ่มบริการ
-        if(TblCaller::findOne(['queue_id' => $modelQueue['queue_id']]) !== null){
+        if($modelQueue['queue_status_id'] == 4){
             throw new HttpException(422, 'คิวนี้เสร็จสิ้นไปแล้ว');
         }
         $modelCall = new TblCaller();
