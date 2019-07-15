@@ -1037,7 +1037,7 @@ class AppQuery
         return $services;
     }
 
-    public static function checkRegisterEx($queueId)
+    public static function checkRegisterEx($queue)
     {
         $startDate = Enum::startDateNow(); // start date today
         $endDate = Enum::endDateNow(); // end date today
@@ -1047,7 +1047,7 @@ class AppQuery
             ])
             ->from('tbl_queue')
             ->where([
-                'tbl_queue.parent_id' => $queueId
+                'tbl_queue.parent_id' => $queue['queue_id']
             ])
             ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
             ->count();
