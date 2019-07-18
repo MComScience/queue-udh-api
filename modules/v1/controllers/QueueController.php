@@ -147,7 +147,7 @@ class QueueController extends ActiveController
             'options', 'data-print', 'kiosk-list', 'priority', 'patient-register',
             'dashboard', 'play-stations', 'get-play-station', 'update-call-status',
             'display-list', 'get-display', 'queue-play-list', 'active-play-station',
-            'led-options'
+            'led-options', 'queue-display'
         ];
         // setup access
         $behaviors['access'] = [
@@ -171,8 +171,7 @@ class QueueController extends ActiveController
                         'call-wait', 'data-wait-by-hn', 'end-wait', 'data-caller', 'recall', 'hold',
                         'data-hold', 'end', 'call-hold', 'end-hold', 'call-selected', 'register-examination',
                         'data-waiting-examination', 'data-caller-examination', 'data-hold-examination',
-                        'get-services', 'check-register-ex', 'update-queue', 'call-wait-ex', 'call-selected-ex',
-                        'queue-display'
+                        'get-services', 'check-register-ex', 'update-queue', 'call-wait-ex', 'call-selected-ex'
                     ],
                     'roles' => [
                         User::ROLE_ADMIN,
