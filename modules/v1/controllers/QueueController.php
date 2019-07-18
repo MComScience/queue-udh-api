@@ -124,6 +124,7 @@ class QueueController extends ActiveController
                 'update-queue' => ['POST'],
                 'call-wait-ex' => ['POST'],
                 'call-selected-ex' => ['POST'],
+                'queue-display' => ['POST', 'GET']
             ],
         ];
         // remove authentication filter
@@ -170,7 +171,8 @@ class QueueController extends ActiveController
                         'call-wait', 'data-wait-by-hn', 'end-wait', 'data-caller', 'recall', 'hold',
                         'data-hold', 'end', 'call-hold', 'end-hold', 'call-selected', 'register-examination',
                         'data-waiting-examination', 'data-caller-examination', 'data-hold-examination',
-                        'get-services', 'check-register-ex', 'update-queue', 'call-wait-ex', 'call-selected-ex'
+                        'get-services', 'check-register-ex', 'update-queue', 'call-wait-ex', 'call-selected-ex',
+                        'queue-display'
                     ],
                     'roles' => [
                         User::ROLE_ADMIN,
@@ -1873,5 +1875,12 @@ class QueueController extends ActiveController
             // Validation error
             throw new HttpException(422, Json::encode($modelQueue->errors));
         }
+    }
+
+    public function actionQueueDisplay()
+    {
+        $params = \Yii::$app->getRequest()->getBodyParams();
+        $rows = AppQuery::getQueueDisplay($params);
+        return $rows;
     }
 }

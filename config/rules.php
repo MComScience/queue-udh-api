@@ -136,6 +136,9 @@ return [
             'OPTIONS call-wait-ex' => 'options',
             'POST call-selected-ex' => 'call-selected-ex',
             'OPTIONS call-selected-ex' => 'options',
+            'POST queue-display' => 'queue-display',
+            'GET queue-display' => 'queue-display',
+            'OPTIONS queue-display' => 'options',
         ]
     ],
     [

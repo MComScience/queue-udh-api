@@ -215,8 +215,8 @@ class AppQuery
     // คิวรอเรียก
     public static function getDataWaiting($params)
     {
-        $startDate = Enum::startDateNow(); // start date today
-        $endDate = Enum::endDateNow(); // end date today
+        $startDate = Enum::startDateNow(); //'2019-05-23 00:00:00'; // start date today
+        $endDate = Enum::endDateNow(); //'2019-05-23 23:59:59'; // end date today
         $query1 = (new Query())
             ->select([
                 'tbl_queue.queue_id',
@@ -1052,5 +1052,36 @@ class AppQuery
             ->andWhere(['between', 'tbl_queue.created_at', $startDate, $endDate])
             ->count();
         return $count;
+    }
+
+    public static function getQueueDisplay($params)
+    {
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow(); // end date today
+        $rows = (new \yii\db\Query())
+            ->select([
+                'tbl_caller.caller_id',
+                'tbl_caller.call_time',
+                'tbl_queue.queue_no',
+                'tbl_counter_service.counter_service_name',
+                'tbl_service_group.queue_service_id',
+                'tbl_queue.queue_id',
+                'tbl_queue.queue_status_id'
+            ])
+            ->from('tbl_caller')
+            ->innerJoin('tbl_queue', 'tbl_queue.queue_id = tbl_caller.queue_id')
+            ->innerJoin('tbl_counter_service', 'tbl_counter_service.counter_service_id = tbl_caller.counter_service_id')
+            ->innerJoin('tbl_service', 'tbl_service.service_id = tbl_queue.service_id')
+            ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
+            ->where([
+                'tbl_queue.queue_status_id' => 2,
+                'tbl_caller.counter_id' => $params['counterIds'],
+                'tbl_queue.service_id' => $params['serviceIds']
+            ])
+            ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])
+            ->groupBy('tbl_caller.caller_id')
+            ->orderBy('tbl_caller.call_time DESC')
+            ->all();
+        return $rows;
     }
 }
