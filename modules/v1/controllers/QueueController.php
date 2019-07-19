@@ -774,8 +774,8 @@ class QueueController extends ActiveController
         $rows = AppQuery::getDataWaitingExamination($params);
         $result = [];
         foreach ($rows as $key => $row) {
-            $model = $this->findModelQueue($row['parent_id']);
-            if($model['queue_status_id'] == 4) {
+            $model = TblQueue::findOne($row['parent_id']);
+            if($model && $model['queue_status_id'] == 4) {
                 $result[] = $row;
             }
         }
