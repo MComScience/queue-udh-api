@@ -139,6 +139,8 @@ return [
             'POST queue-display' => 'queue-display',
             'GET queue-display' => 'queue-display',
             'OPTIONS queue-display' => 'options',
+            'GET find-queue-by-parent' => 'find-queue-by-parent',
+            'OPTIONS find-queue-by-parent' => 'options',
         ]
     ],
     [

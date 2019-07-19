@@ -124,7 +124,8 @@ class QueueController extends ActiveController
                 'update-queue' => ['POST'],
                 'call-wait-ex' => ['POST'],
                 'call-selected-ex' => ['POST'],
-                'queue-display' => ['POST', 'GET']
+                'queue-display' => ['POST', 'GET'],
+                'find-queue-by-parent' => ['GET']
             ],
         ];
         // remove authentication filter
@@ -171,7 +172,8 @@ class QueueController extends ActiveController
                         'call-wait', 'data-wait-by-hn', 'end-wait', 'data-caller', 'recall', 'hold',
                         'data-hold', 'end', 'call-hold', 'end-hold', 'call-selected', 'register-examination',
                         'data-waiting-examination', 'data-caller-examination', 'data-hold-examination',
-                        'get-services', 'check-register-ex', 'update-queue', 'call-wait-ex', 'call-selected-ex'
+                        'get-services', 'check-register-ex', 'update-queue', 'call-wait-ex', 'call-selected-ex',
+                        'find-queue-by-parent'
                     ],
                     'roles' => [
                         User::ROLE_ADMIN,
@@ -769,10 +771,17 @@ class QueueController extends ActiveController
     public function actionDataWaitingExamination()
     {
         $params = \Yii::$app->getRequest()->getBodyParams();
-        $data = AppQuery::getDataWaitingExamination($params);
+        $rows = AppQuery::getDataWaitingExamination($params);
+        $result = [];
+        foreach ($rows as $key => $row) {
+            $model = $this->findModelQueue($row['parent_id']);
+            if($model['queue_status_id'] == 4) {
+                $result[] = $row;
+            }
+        }
         $response = \Yii::$app->getResponse();
         $response->setStatusCode(200);
-        return $data;
+        return $result;
     }
 
     // คิวกำลังเรียก ห้องตรวจ
@@ -1101,12 +1110,19 @@ class QueueController extends ActiveController
                 'queue_status_id' => TblQueue::STATUS_END
             ]);
             $params['queue'] = $queue;
+
+            $register = null;
+            if($is_issue_ex) {
+                $register = $this->getQueueExRegisterData($modelQueue, $params);
+            }
+            
             return ArrayHelper::merge($params, [
                 'event_on' => 'tbl_wait',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
                 'service' => $modelService,
-                'is_issue_ex' => $is_issue_ex
+                'is_issue_ex' => $is_issue_ex,
+                'register' => $register
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -1226,12 +1242,19 @@ class QueueController extends ActiveController
             $params['counter_service']['key'] = $modelCounterService['counter_service_id'];
             $params['counter_service']['value'] = $modelCounterService['counter_service_name'];
             $params['queue']['end_time'] = $modelCall['end_time'];
+
+            $register = null;
+            if($is_issue_ex) {
+                $register = $this->getQueueExRegisterData($modelQueue, $params);
+            }
+
             return ArrayHelper::merge($params, [
                 'event_on' => 'tbl_caller',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
                 'service' => $modelService,
-                'is_issue_ex' => $is_issue_ex
+                'is_issue_ex' => $is_issue_ex,
+                'register' => $register
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -1316,12 +1339,18 @@ class QueueController extends ActiveController
             $params['queue']['counter_service_no'] = $modelCounterService['counter_service_no'];
             $params['counter_service']['key'] = $modelCounterService['counter_service_id'];
             $params['counter_service']['value'] = $modelCounterService['counter_service_name'];
+
+            $register = null;
+            if($is_issue_ex) {
+                $register = $this->getQueueExRegisterData($modelQueue, $params);
+            }
             return ArrayHelper::merge($params, [
                 'event_on' => 'tbl_hold',
                 'caller' => $modelCall,
                 'group' => $modelServiceGroup,
                 'service' => $modelService,
-                'is_issue_ex' => $is_issue_ex
+                'is_issue_ex' => $is_issue_ex,
+                'register' => $register
             ]);
         } else {
             throw new HttpException(422, Json::encode($modelCall->errors));
@@ -1881,5 +1910,83 @@ class QueueController extends ActiveController
         $params = \Yii::$app->getRequest()->getBodyParams();
         $rows = AppQuery::getQueueDisplay($params);
         return $rows;
+    }
+
+    public function actionFindQueueByParent($id){
+        $model = TblQueue::findOne(['parent_id' => $id]);
+        if(!$model) {
+            throw new HttpException(422, 'ไม่พบรายการคิว');
+        }
+        return $model;
+    }
+
+    private function getQueueExRegisterData($modelQueue, $params)
+    {
+        $modelStorage = FileStorageItem::findOne(['ref_id' => $modelQueue['patient_id']]); // ไฟล์ภาพ
+        $imgUrl = '';
+        if ($modelStorage) { // ถ้ามีรูปภาพเดิมจากคิวซักประวัติ
+            $imgUrl = Html::imgUrl($modelStorage['path']); // ลิ้งค์รูปภาพ
+        }
+        $modelQueueEx = TblQueue::findOne(['parent_id' => $modelQueue['queue_id']]);
+        if(!$modelQueueEx) {
+            throw new HttpException(422, Json::encode($modelQueueEx->errors));
+        }
+        $modelPatient = $this->findModelPatient($modelQueueEx['patient_id']);
+        $modelServiceEx = $this->findModelService($modelQueueEx['service_id']); // บริการ
+        $modelServiceGroupEx = $this->findModelServiceGroup($modelServiceEx['service_group_id']); // กลุ่มบริการ
+        $modelQueueServiceEx = $this->findModelQueueService($modelServiceGroupEx['queue_service_id']); // ประเภทคิวบริการ
+        $doctor = TblDoctor::findOne($modelQueueEx['doctor_id']);
+        $modelCallEx = TblCaller::findOne(['queue_id' => $modelQueueEx['queue_id']]);
+        if(!$modelCallEx) {
+            throw new HttpException(422, 'ไม่พบรายการคิวเรียก');
+        }
+        $counterServiceEx = $this->findModelCounterService($modelCallEx['counter_service_id']);
+
+        $queue = [
+            'queue_id' => $modelQueueEx['queue_id'],
+            'queue_no' => $modelQueueEx['queue_no'],
+            'patient_id' => $modelQueueEx['patient_id'],
+            'service_group_id' => $modelQueueEx['service_group_id'],
+            'service_id' => $modelQueueEx['service_id'],
+            'priority_id' => $modelQueueEx['priority_id'],
+            'queue_station' => $modelQueueEx['queue_station'],
+            'case_patient' => $modelQueueEx['case_patient'],
+            'appoint' => $modelQueueEx['appoint'],
+            'queue_status_id' => $modelQueueEx['queue_status_id'],
+            'cid' => !empty($modelPatient['cid']) ? substr_replace($modelPatient['cid'], "****", 9) : '',
+            'fullname' => $modelPatient['fullname'],
+            'hn' => $modelPatient['hn'],
+            'maininscl_name' => $modelPatient['maininscl_name'],
+            'print_time' => Yii::$app->formatter->asDate($modelQueueEx['created_at'], 'php:Y-m-d H:i:s'),
+            'service_group_name' => $modelServiceGroupEx['service_group_name'],
+            'service_name' => $modelServiceEx['service_name'],
+            'created_at' => $modelQueueEx['created_at'],
+            'updated_at' => $modelQueueEx['updated_at'],
+            'created_by' => $modelQueueEx['created_by'],
+            'updated_by' => $modelQueueEx['updated_by'],
+            'name' => $modelQueueEx->profile ? $modelQueueEx->profile->name : '',
+            'base_url' => $modelStorage ? $modelStorage['base_url'] : '',
+            'path' => $modelStorage ? $modelStorage['path'] : '',
+            'queue_service_name' => $modelQueueServiceEx['queue_service_name'],
+            'doctor_name' => $doctor ? $doctor->fullname : '-',
+            'issue_card_ex' => $modelQueueEx['issue_card_ex'],
+            'parent_id' => $modelQueueEx['parent_id'],
+            'counter_id' => $modelCallEx['counter_id'],
+            'counter_service_id' => $modelCallEx['counter_service_id'],
+            'counter_service_name' => $counterServiceEx['counter_service_name'],
+            'counter_service_no' => $counterServiceEx['counter_service_no'],
+            'doctor_id' => $modelQueueEx['doctor_id'] // แพทย์
+        ];
+
+        $register = [
+            'group' => $modelServiceGroupEx,
+            'imgUrl' => $imgUrl,
+            'oldQueue' => $params['queue'],
+            'patient' => $modelPatient,
+            'queue' => $queue,
+            'service' => $modelServiceEx,
+            'serviceGroup' => $modelServiceGroupEx,
+        ];
+        return $register;
     }
 }

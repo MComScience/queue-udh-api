@@ -215,8 +215,8 @@ class AppQuery
     // คิวรอเรียก
     public static function getDataWaiting($params)
     {
-        $startDate = Enum::startDateNow(); //'2019-05-23 00:00:00'; // start date today
-        $endDate = Enum::endDateNow(); //'2019-05-23 23:59:59'; // end date today
+        $startDate = Enum::startDateNow(); // start date today
+        $endDate = Enum::endDateNow();  // end date today
         $query1 = (new Query())
             ->select([
                 'tbl_queue.queue_id',
@@ -492,6 +492,7 @@ class AppQuery
                 'tbl_queue.case_patient',
                 'tbl_queue.appoint',
                 'tbl_queue.doctor_id',
+                'tbl_queue.parent_id',
                 'file_storage_item.base_url',
                 'file_storage_item.path',
                 'tbl_service.service_code',
