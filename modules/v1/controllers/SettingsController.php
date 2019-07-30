@@ -883,6 +883,7 @@ class SettingsController extends ActiveController
             $response[] = [
                 'display_id' => $display['display_id'],
                 'display_name' => $display['display_name'],
+                'hold_label' => $display['hold_label'],
                 'display_css' => $display['display_css'],
                 'page_length' => $display['page_length'],
                 'display_status' => $display['display_status'],

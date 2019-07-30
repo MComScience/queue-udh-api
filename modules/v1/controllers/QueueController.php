@@ -606,7 +606,22 @@ class QueueController extends ActiveController
                 'base_url' => !empty($row['base_url']) ? Html::imgUrl($row['path']) : ''
             ]);
         } */
-        return AppQuery::getAllQueue(['startDate' => $startDate, 'endDate' => $endDate]);
+        $rows = AppQuery::getAllQueue(['startDate' => $startDate, 'endDate' => $endDate]);
+        $result = [];
+        foreach ($rows as $key => $row) {
+            $caller = TblCaller::findOne(['queue_id' => $row['queue_id']]);
+            if($caller) {
+                $counter = TblCounterService::findOne(['counter_service_id' => $caller['counter_service_id']]);
+                $result[] = ArrayHelper::merge($row, [
+                    'counter_service_name' => $counter['counter_service_name']
+                ]);
+            } else {
+                $result[] = ArrayHelper::merge($row, [
+                    'counter_service_name' => ''
+                ]);
+            }
+        }
+        return $result;
     }
 
     // ลบข้อมูลคิว
@@ -1731,6 +1746,7 @@ class QueueController extends ActiveController
         return [
             'display_id' => $display['display_id'],
             'display_name' => $display['display_name'],
+            'hold_label' => $display['hold_label'],
             'display_css' => $display['display_css'],
             'page_length' => $display['page_length'],
             'counterIds' => $counterIds,

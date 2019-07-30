@@ -38,6 +38,7 @@ class TblDisplay extends \yii\db\ActiveRecord
             [['display_css', 'counter_id', 'service_id'], 'safe'],
             [['page_length', 'display_status'], 'integer'],
             [['display_name'], 'string', 'max' => 100],
+            [['hold_label'], 'string', 'max' => 255],
         ];
     }
 
@@ -49,6 +50,7 @@ class TblDisplay extends \yii\db\ActiveRecord
         return [
             'display_id' => 'Display ID',
             'display_name' => 'ชื่อจอแสดงผล',
+            'hold_label' => 'ข้อความคิวที่เรียกไปแล้ว',
             'display_css' => 'Css',
             'page_length' => 'จำนวนรายการที่แสดง(แถว)',
             'counter_id' => 'เคาน์เตอร์',
