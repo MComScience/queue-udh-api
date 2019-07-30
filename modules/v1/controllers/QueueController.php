@@ -281,7 +281,8 @@ class QueueController extends ActiveController
                         'print_time' => Yii::$app->formatter->asDate($modelQueue['created_at'], 'php:Y-m-d H:i:s'),
                         'service_group_name' => $modelServiceGroup['service_group_name'],
                         'issue_card_ex' => $modelQueue['issue_card_ex'],
-                        'parent_id' => $modelQueue['parent_id']
+                        'parent_id' => $modelQueue['parent_id'],
+                        'appoint' => $modelQueue['appoint'],
                     ];
                     $transaction->commit();
                     $response = \Yii::$app->getResponse();
