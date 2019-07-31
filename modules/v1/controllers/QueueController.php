@@ -1469,7 +1469,7 @@ class QueueController extends ActiveController
                     'patient_id' => $modelPatient['patient_id'], // ไอดีผู้ป่วย
                     //'service_group_id' => $modelServiceGroup['service_group_id'], // กลุ่มบริการ
                     //'service_id' => $modelService['service_id'], // ชื่อบริการ
-                    'priority_id' => $oldQueue['priority_id'], // ประเภทคิว
+                    'priority_id' => 1, // ประเภทคิว
                     'queue_station' => $oldQueue['queue_station'], // ออกคิวจากตู้หรือ one stop
                     'case_patient' => $oldQueue['case_patient'], // กรณีผู้ป่วย
                     'appoint' => $oldQueue['appoint'], // คิวนัด
