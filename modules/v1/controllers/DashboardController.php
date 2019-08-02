@@ -114,16 +114,17 @@ class DashboardController extends ActiveController
         return $behaviors;
     }
 
-    public function actionCountServices($q = '')
+    public function actionCountServices($startDate = '', $endDate = '')
     {
-        $startDate = Enum::startDateNow(); // start date today
-        $endDate = Enum::endDateNow(); // end date today
         // ถ้ามีการค้นหาจากวันที่
-        if (!empty($q)) {
+        if (!empty($startDate) && !empty($endDate)) {
             // วันที่เริ่ม
-            $startDate = $q . ' 00:00:00';
+            $startDate = $startDate . ' 00:00:00';
             // วันที่สิ้นสุด
-            $endDate = $q . ' 23:59:59';
+            $endDate = $endDate . ' 23:59:59';
+        } else {
+            $startDate = Enum::startDateNow(); // start date today
+            $endDate = Enum::endDateNow(); // end date today
         }
         $itemServices = [];
         $countAll = TblQueue::find()->betweenCreateAt($startDate, $endDate)->count(); // จำนวนทั้งหมด
@@ -164,72 +165,72 @@ class DashboardController extends ActiveController
         return $itemServices;
     }
 
-    public function actionPieChart($q = '')
+    public function actionPieChart($startDate = '', $endDate = '')
     {
-        $startDate = Enum::startDateNow(); // start date today
-        $endDate = Enum::endDateNow(); // end date today
-        // ถ้ามีการค้นหาจากวันที่
-        if (!empty($q)) {
+        if (!empty($startDate) && !empty($endDate)) {
             // วันที่เริ่ม
-            $startDate = $q . ' 00:00:00';
+            $startDate = $startDate . ' 00:00:00';
             // วันที่สิ้นสุด
-            $endDate = $q . ' 23:59:59';
+            $endDate = $endDate . ' 23:59:59';
+        } else {
+            $startDate = Enum::startDateNow(); // start date today
+            $endDate = Enum::endDateNow(); // end date today
         }
         return ChartBuilder::getPieChart($startDate, $endDate);
     }
 
-    public function actionColumnChart($q = '')
+    public function actionColumnChart($startDate = '', $endDate = '')
     {
-        $startDate = Enum::startDateNow(); // start date today
-        $endDate = Enum::endDateNow(); // end date today
-        // ถ้ามีการค้นหาจากวันที่
-        if (!empty($q)) {
+        if (!empty($startDate) && !empty($endDate)) {
             // วันที่เริ่ม
-            $startDate = $q . ' 00:00:00';
+            $startDate = $startDate . ' 00:00:00';
             // วันที่สิ้นสุด
-            $endDate = $q . ' 23:59:59';
+            $endDate = $endDate . ' 23:59:59';
+        } else {
+            $startDate = Enum::startDateNow(); // start date today
+            $endDate = Enum::endDateNow(); // end date today
         }
         return ChartBuilder::getColumnChart($startDate, $endDate);
     }
 
-    public function actionFloorChart($q = '')
+    public function actionFloorChart($startDate = '', $endDate = '')
     {
-        $startDate = Enum::startDateNow(); // start date today
-        $endDate = Enum::endDateNow(); // end date today
-        // ถ้ามีการค้นหาจากวันที่
-        if (!empty($q)) {
+        if (!empty($startDate) && !empty($endDate)) {
             // วันที่เริ่ม
-            $startDate = $q . ' 00:00:00';
+            $startDate = $startDate . ' 00:00:00';
             // วันที่สิ้นสุด
-            $endDate = $q . ' 23:59:59';
+            $endDate = $endDate . ' 23:59:59';
+        } else {
+            $startDate = Enum::startDateNow(); // start date today
+            $endDate = Enum::endDateNow(); // end date today
         }
         return ChartBuilder::getChartFloor($startDate, $endDate);
     }
 
-    public function actionColumnDeptChart($q = '')
+    public function actionColumnDeptChart($startDate = '', $endDate = '')
     {
-        $startDate = Enum::startDateNow(); // start date today
-        $endDate = Enum::endDateNow(); // end date today
-        // ถ้ามีการค้นหาจากวันที่
-        if (!empty($q)) {
+        if (!empty($startDate) && !empty($endDate)) {
             // วันที่เริ่ม
-            $startDate = $q . ' 00:00:00';
+            $startDate = $startDate . ' 00:00:00';
             // วันที่สิ้นสุด
-            $endDate = $q . ' 23:59:59';
+            $endDate = $endDate . ' 23:59:59';
+        } else {
+            $startDate = Enum::startDateNow(); // start date today
+            $endDate = Enum::endDateNow(); // end date today
         }
         return ChartBuilder::getColumnDeptChart($startDate, $endDate);
     }
 
-    public function actionKioskChart($q = '')
+    public function actionKioskChart($startDate = '', $endDate = '')
     {
-        $startDate = Enum::startDateNow(); // start date today
-        $endDate = Enum::endDateNow(); // end date today
-        // ถ้ามีการค้นหาจากวันที่
-        if (!empty($q)) {
+        if (!empty($startDate) && !empty($endDate)) {
             // วันที่เริ่ม
-            $startDate = $q . ' 00:00:00';
+            $startDate = $startDate . ' 00:00:00';
             // วันที่สิ้นสุด
-            $endDate = $q . ' 23:59:59';
+            $endDate = $endDate . ' 23:59:59';
+        } else {
+            $startDate = Enum::startDateNow(); // start date today
+            $endDate = Enum::endDateNow(); // end date today
         }
         return ChartBuilder::getKioskChart($startDate, $endDate);
     }

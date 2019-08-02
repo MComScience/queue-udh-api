@@ -249,7 +249,7 @@ class SiteController extends Controller
             '{hn}' => $modelPatient['hn'],
             '{vn}' => $modelPatient['vn'],
             '{cid}' => $modelPatient['cid'],
-            '{number}' => $model['queue_no'], // เลขคิว
+            '{number}' => $model['priority_id'] == 2 ? $model['queue_no'].'(A)' : $model['queue_no'], // เลขคิว
             '{dept_name}' => $service['service_name'].' ('.$service_code.')', // แผนก
             '{message_right}' => $modelPatient['maininscl_name'], // ชื่อสิทธิ
             '{fullname}' => $modelPatient['fullname']. ' (<i style="font-size: 13px;">'.$model->getCasePatientName().'</i>)', // ชื่อผู้ป่วย + กรณีผู้ป่วย
