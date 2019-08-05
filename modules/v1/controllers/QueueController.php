@@ -1099,6 +1099,7 @@ class QueueController extends ActiveController
         $modelQueue = $this->findModelQueue($params['queue']['queue_id']);
         $modelService = $this->findModelService($modelQueue['service_id']); // บริการ
         $modelServiceGroup = $this->findModelServiceGroup($modelService['service_group_id']); // กลุ่มบริการ
+        $modelCounterService = $this->findModelCounterService($params['counter_service']['key']);
         if($modelQueue['queue_status_id'] == 4){
             throw new HttpException(422, 'คิวนี้เสร็จสิ้นไปแล้ว');
         }
@@ -1123,7 +1124,8 @@ class QueueController extends ActiveController
 
         if ($modelCall->save() && $modelQueue->save()) {
             $queue = ArrayHelper::merge($params['queue'], [
-                'queue_status_id' => TblQueue::STATUS_END
+                'queue_status_id' => TblQueue::STATUS_END,
+                'counter_service_no' => $modelCounterService['counter_service_no'],
             ]);
             $params['queue'] = $queue;
 
