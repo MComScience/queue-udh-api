@@ -331,10 +331,10 @@ JSON;
         if (!$data) {
             $logger->info('pt-right', ['msg' => 'RESPONSE FAILED', 'cid' => $cid, 'data' => $data]);
             throw new HttpException(422, 'RESPONSE FAILED');
-        } else if ($data['ws_status'] == 'NHSO-00003') {
+        } else if (isset($data['ws_status']) && $data['ws_status'] == 'NHSO-00003') {
             $logger->info('pt-right', ['msg' => isset($data['ws_status_desc']) ? $data['ws_status_desc'] : 'TOKEN EXPIRE', 'cid' => $cid, 'data' => $data]);
             throw new HttpException(422, isset($data['ws_status_desc']) ? $data['ws_status_desc'] : 'TOKEN EXPIRE');
-        } else if (empty($data['fname'])) {
+        } else if (isset($data['fname']) && empty($data['fname'])) {
             $logger->info('pt-right', ['msg' => 'NOT FOUND IN NHSO', 'cid' => $cid, 'data' => $data]);
             throw new HttpException(422, 'NOT FOUND IN NHSO');
         } elseif(!isset($data['maininscl']) || !isset($data['maininscl_name'])) {
