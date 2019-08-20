@@ -222,12 +222,12 @@ class TblQueue extends \yii\db\ActiveRecord
             ]);
         }
         // $prefix = $this->priority_id == 1 ? $modelPrefix['prefix_code'] : 'A';
-        $prefix = !empty($modelPrefix['prefix_code']) ? $modelPrefix['prefix_code'] : '';
+        $prefix = !empty($modelPrefix['prefix_code']) ? $modelPrefix['prefix_code'] : '0';
         if(!$modelAutoNumber){ // no data
             $component = \Yii::createObject([
                 'class' => BaseAutoNumber::className(),
                 'prefix' => $prefix,
-                'number' => 1,
+                'number' => 0,
                 'digit' => (int)$service['service_num_digit'],
             ]);
             $number = $component->generate();
