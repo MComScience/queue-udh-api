@@ -491,7 +491,7 @@ class AppQuery
                 'tbl_queue.queue_station',
                 'tbl_queue.case_patient',
                 'tbl_queue.appoint',
-                'tbl_queue.doctor_id',
+                'tbl_doctor.doctor_id',
                 'tbl_queue.parent_id',
                 'file_storage_item.base_url',
                 'file_storage_item.path',
