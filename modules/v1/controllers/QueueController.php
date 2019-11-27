@@ -1867,7 +1867,10 @@ class QueueController extends ActiveController
                     'counter_service_id' => $modelCounterService['counter_service_id'],
                 ],
                 'sources' => $sources,
-                'call_groups' => ArrayHelper::getColumn($callers, 'queue_no')
+                'call_groups' => ArrayHelper::getColumn($callers, 'queue_no'),
+                'group' => [
+                	'queue_service_id' => $row['queue_service_id']
+                ]
             ];
         }
         return $response;
