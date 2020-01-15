@@ -1757,8 +1757,10 @@ class QueueController extends ActiveController
         ];
     }
 
-    public function actionQueuePlayList()
+    public function actionQueuePlayList($id)
     {
+        $playStation = $this->findModelPlayStation($id);
+        $counterServiceIds = !empty($playStation['counter_service_id']) ? unserialize($playStation['counter_service_id']) : [];
         $startDate = Enum::startDateNow(); // start date today
         $endDate = Enum::endDateNow(); // end date today
         $rows = (new \yii\db\Query())
@@ -1796,7 +1798,8 @@ class QueueController extends ActiveController
             ->innerJoin('tbl_service_group', 'tbl_service_group.service_group_id = tbl_service.service_group_id')
             ->where([
                 'tbl_caller.caller_status' => TblCaller::STATUS_CALL,
-                'tbl_queue.queue_status_id' => TblQueue::STATUS_CALL
+                'tbl_queue.queue_status_id' => TblQueue::STATUS_CALL,
+                'tbl_caller.counter_service_id' => $counterServiceIds
             ])
             ->andWhere(['between', 'tbl_caller.created_at', $startDate, $endDate])
             ->groupBy('tbl_caller.caller_id')
